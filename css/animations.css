@@ -1,0 +1,133 @@
+/* ============================================================
+   Animation Keyframes
+   ============================================================ */
+
+/* Page transitions */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page--active {
+  animation: page-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scale up */
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Note card appear */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.note-card {
+  animation: card-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card:nth-child(1) { animation-delay: 0s; }
+.note-card:nth-child(2) { animation-delay: 0.04s; }
+.note-card:nth-child(3) { animation-delay: 0.08s; }
+.note-card:nth-child(4) { animation-delay: 0.12s; }
+.note-card:nth-child(5) { animation-delay: 0.16s; }
+.note-card:nth-child(6) { animation-delay: 0.20s; }
+.note-card:nth-child(7) { animation-delay: 0.24s; }
+.note-card:nth-child(8) { animation-delay: 0.28s; }
+
+/* Bouncing dots */
+@keyframes bounce-dot {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Recording pulse */
+@keyframes pulse-record {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 59, 48, 0);
+  }
+}
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px);
+  }
+}
+
+/* Tab bar icon pulse */
+@keyframes tab-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.tab-bar__item--active .tab-bar__icon {
+  animation: tab-pulse 0.3s var(--spring);
+}
+
+/* Waveform animation */
+@keyframes waveform-bar {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}

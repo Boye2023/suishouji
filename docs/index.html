@@ -1,0 +1,3609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4A90D9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="随手记">
+  <title>随手记</title>
+  <style>/* ============================================================
+   1. CSS Custom Properties (Design Tokens)
+   ============================================================ */
+:root {
+  /* Color Palette */
+  --color-primary: #4A90D9;
+  --color-primary-light: #7AB3E8;
+  --color-primary-dark: #3A7BC8;
+  --color-primary-bg: rgba(74, 144, 217, 0.08);
+
+  --color-bg: #F5F6FA;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F0F1F5;
+
+  --color-text: #1A1A2E;
+  --color-text-secondary: #8E8E93;
+  --color-text-tertiary: #C7C7CC;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: #E8E8ED;
+  --color-divider: #F0F0F5;
+
+  --color-accent-voice: #FF6B6B;
+  --color-accent-image: #4ECDC4;
+  --color-accent-text: #4A90D9;
+
+  --color-success: #34C759;
+  --color-warning: #FF9500;
+  --color-error: #FF3B30;
+
+  --color-calendar-dot: #4A90D9;
+  --color-calendar-badge: #FF6B6B;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-size-caption: 11px;
+  --font-size-tiny: 12px;
+  --font-size-small: 13px;
+  --font-size-body: 15px;
+  --font-size-subtitle: 17px;
+  --font-size-title: 20px;
+  --font-size-headline: 24px;
+
+  /* Spacing (8px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+
+  /* Layout */
+  --max-width: 480px;
+  --tab-bar-height: 56px;
+  --header-height: 52px;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Animation Tokens */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================
+   2. Reset & Base
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================================
+   3. Layout
+   ============================================================ */
+.app-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.page {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + var(--space-2));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page--active {
+  display: flex;
+}
+
+.page-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: calc(var(--safe-area-top) + var(--space-3)) var(--space-4) var(--space-3);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-header__title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.page-header__subtitle {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   4. Tab Bar
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: var(--tab-bar-height);
+  padding-bottom: var(--safe-area-bottom);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.tab-bar__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 64px;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-bar__item--active {
+  color: var(--color-primary);
+}
+
+.tab-bar__icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tab-bar__label {
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+}
+
+/* ============================================================
+   5. Home Page
+   ============================================================ */
+.home-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  position: relative;
+}
+
+/* Note type selector */
+.note-type-selector {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-1);
+  box-shadow: var(--shadow-sm);
+}
+
+.note-type-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 44px;
+}
+
+.note-type-btn--active {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-md);
+}
+
+.note-type-btn__icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Record area */
+.record-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-view {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+}
+
+.record-view--active {
+  display: flex;
+}
+
+/* Text input */
+.text-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.text-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: var(--space-4);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+  color: var(--color-text);
+  background: transparent;
+  min-height: 120px;
+}
+
+.text-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.text-input__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+.text-input__counter {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-tertiary);
+}
+
+/* Send button */
+.btn-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-send:disabled {
+  background: var(--color-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-send:not(:disabled):active {
+  transform: scale(0.92);
+  background: var(--color-primary-dark);
+}
+
+/* Image upload */
+.image-upload-area {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.image-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-4);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  margin: var(--space-3);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 180px;
+  color: var(--color-text-tertiary);
+}
+
+.image-drop-zone--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.image-drop-zone__icon {
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+.image-drop-zone__text {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.image-drop-zone__hint {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-tertiary);
+}
+
+.image-file-input {
+  display: none;
+}
+
+/* Image preview */
+.image-preview {
+  position: relative;
+  margin: var(--space-3);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.image-preview__img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  display: block;
+}
+
+.image-preview__remove {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.image-preview__remove:active {
+  background: rgba(0,0,0,0.8);
+  transform: scale(0.9);
+}
+
+/* Image caption */
+.image-caption-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--space-4);
+}
+
+.image-caption-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: transparent;
+  min-height: 40px;
+  max-height: 100px;
+}
+
+.image-caption-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Voice recorder */
+.voice-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--space-6);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-8) var(--space-4);
+}
+
+.voice-recorder__visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.voice-waveform {
+  width: 280px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+}
+
+.voice-recorder__timer {
+  font-size: var(--font-size-headline);
+  font-weight: 300;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.voice-recorder__timer--recording {
+  color: var(--color-accent-voice);
+}
+
+.voice-recorder__status {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.voice-record-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-accent-voice);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+}
+
+.voice-record-btn:active {
+  transform: scale(0.93);
+}
+
+.voice-record-btn--recording {
+  background: var(--color-error);
+  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.4);
+  animation: pulse-record 2s ease-in-out infinite;
+}
+
+.voice-record-btn__icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* AI Processing */
+.ai-processing {
+  position: fixed;
+  bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + var(--space-6));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-text);
+  color: white;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  max-width: var(--max-width);
+}
+
+.ai-processing__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.ai-processing__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  animation: bounce-dot 0.6s ease-in-out infinite;
+}
+
+.ai-processing__dot:nth-child(2) { animation-delay: 0.1s; }
+.ai-processing__dot:nth-child(3) { animation-delay: 0.2s; }
+
+.ai-processing__text {
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: calc(var(--safe-area-top) + var(--space-4));
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-success);
+  color: white;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.toast--error {
+  background: var(--color-error);
+}
+
+.toast--visible {
+  animation: toast-in 0.3s ease forwards, toast-out 0.3s ease 1.7s forwards;
+}
+
+/* ============================================================
+   6. Memory Bank Page
+   ============================================================ */
+.memory-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Calendar strip */
+.calendar-strip-wrapper {
+  padding: var(--space-3) 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-strip {
+  display: flex;
+  gap: 2px;
+  padding: 0 var(--space-3);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.calendar-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 52px;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.calendar-day:active {
+  background: var(--color-surface-hover);
+}
+
+.calendar-day--today {
+  background: var(--color-primary-bg);
+}
+
+.calendar-day--selected {
+  background: var(--color-primary);
+  color: white;
+}
+
+.calendar-day__weekday {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  line-height: 1;
+}
+
+.calendar-day--selected .calendar-day__weekday {
+  color: rgba(255,255,255,0.7);
+}
+
+.calendar-day__date {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.calendar-day__thumbnail {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-bg);
+}
+
+.calendar-day__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-calendar-dot);
+}
+
+.calendar-day--selected .calendar-day__dot {
+  background: white;
+}
+
+.calendar-day__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-calendar-badge);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.calendar-day--selected .calendar-day__badge {
+  background: white;
+  color: var(--color-primary);
+}
+
+/* Search bar */
+.search-bar-wrapper {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  height: 40px;
+}
+
+.search-bar__icon {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.search-bar__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.search-bar__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.search-bar__input::-webkit-search-decoration,
+.search-bar__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-bar__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--color-text-tertiary);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Timeline */
+.timeline {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.timeline__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-4);
+  color: var(--color-text-tertiary);
+}
+
+.timeline__empty-icon {
+  margin-bottom: var(--space-4);
+  opacity: 0.4;
+}
+
+.timeline__empty-text {
+  font-size: var(--font-size-subtitle);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.timeline__empty-hint {
+  font-size: var(--font-size-small);
+  color: var(--color-text-tertiary);
+}
+
+.timeline__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-small);
+}
+
+.timeline__sentinel {
+  height: 1px;
+}
+
+/* Date divider */
+.timeline-date-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-tiny);
+}
+
+.timeline-date-divider::before,
+.timeline-date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+/* Note card */
+.note-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.note-card:active {
+  transform: scale(0.985);
+}
+
+.note-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.note-card__title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.note-card__time {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  margin-left: var(--space-2);
+}
+
+.note-card__body {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.note-card__image {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.note-card__voice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
+}
+
+.note-card__play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-accent-voice);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.note-card__play-btn:active {
+  transform: scale(0.9);
+}
+
+.note-card__play-btn--playing {
+  background: var(--color-error);
+}
+
+.note-card__voice-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-card__voice-duration {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.note-card__voice-transcript {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.note-card__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+}
+
+.note-card__delete {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.05);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-size: 14px;
+}
+
+.note-card:hover .note-card__delete,
+.note-card:active .note-card__delete {
+  opacity: 1;
+}
+
+/* Swipe hint */
+.note-card__swipe-hint {
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-error);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-small);
+  display: none;
+}
+
+/* ============================================================
+   7. Profile Page
+   ============================================================ */
+.profile-content {
+  flex: 1;
+  padding: var(--space-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Profile card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+}
+
+.profile-card__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.profile-card__avatar--logged-in {
+  background: var(--color-primary);
+  color: white;
+}
+
+.profile-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-card__name {
+  font-size: var(--font-size-subtitle);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.profile-card__meta {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-secondary);
+}
+
+.profile-card__action {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.profile-card__action:active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.profile-card__action--logout {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
+}
+
+/* Quick stats */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.quick-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-stat__value {
+  font-size: var(--font-size-headline);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.quick-stat__label {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+/* Stats section */
+.stats-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+}
+
+.stats-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.stats-section__title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.stats-section__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stats-section__range {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-secondary);
+  min-width: 120px;
+  text-align: center;
+}
+
+.stats-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stats-nav-btn:active {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Chart containers */
+.chart-container {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-container svg {
+  max-width: 100%;
+}
+
+.chart-donut-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-3);
+  min-height: 140px;
+}
+
+.chart-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-small);
+  padding: var(--space-6);
+}
+
+/* Storage info */
+.storage-info {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+}
+
+.storage-info__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.storage-info__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.storage-info__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-primary);
+  transition: width var(--transition-slow);
+}
+
+/* ============================================================
+   8. Modal
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: var(--space-6);
+  animation: fade-in 0.2s ease;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  animation: scale-up 0.25s var(--spring);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.modal__title {
+  font-size: var(--font-size-subtitle);
+  font-weight: 600;
+}
+
+.modal__close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.modal__body {
+  padding: var(--space-5);
+}
+
+.modal__hint {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-tertiary);
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+/* Form */
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 44px;
+}
+
+.btn-primary:active {
+  background: var(--color-primary-dark);
+  transform: scale(0.98);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ============================================================
+   9. Spinner
+   ============================================================ */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ============================================================
+   10. Utility Classes
+   ============================================================ */
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   11. Responsive
+   ============================================================ */
+@media (min-width: 414px) {
+  .calendar-day {
+    min-width: 56px;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+@media (hover: hover) {
+  .note-card:hover .note-card__delete {
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   Animation Keyframes
+   ============================================================ */
+
+/* Page transitions */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page--active {
+  animation: page-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scale up */
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Note card appear */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.note-card {
+  animation: card-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card:nth-child(1) { animation-delay: 0s; }
+.note-card:nth-child(2) { animation-delay: 0.04s; }
+.note-card:nth-child(3) { animation-delay: 0.08s; }
+.note-card:nth-child(4) { animation-delay: 0.12s; }
+.note-card:nth-child(5) { animation-delay: 0.16s; }
+.note-card:nth-child(6) { animation-delay: 0.20s; }
+.note-card:nth-child(7) { animation-delay: 0.24s; }
+.note-card:nth-child(8) { animation-delay: 0.28s; }
+
+/* Bouncing dots */
+@keyframes bounce-dot {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Recording pulse */
+@keyframes pulse-record {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 59, 48, 0);
+  }
+}
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px);
+  }
+}
+
+/* Tab bar icon pulse */
+@keyframes tab-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.tab-bar__item--active .tab-bar__icon {
+  animation: tab-pulse 0.3s var(--spring);
+}
+
+/* Waveform animation */
+@keyframes waveform-bar {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+</style>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Page: Home (Quick Record) -->
+    <div id="page-home" class="page page--active">
+      <header class="page-header">
+        <h1 class="page-header__title">随手记</h1>
+        <span class="page-header__subtitle">轻量碎片记录</span>
+      </header>
+      <div class="home-content">
+        <!-- Note type selector -->
+        <div class="note-type-selector" id="noteTypeSelector">
+          <button class="note-type-btn note-type-btn--active" data-type="text">
+            <svg class="note-type-btn__icon" viewBox="0 0 24 24" width="20" height="20"><path d="M3 3h12l6 6v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 2v14h16V10h-5V5H4zm7 3h6v2h-6V8zm0 4h6v2h-6v-2z" fill="currentColor"/></svg>
+            <span>文字</span>
+          </button>
+          <button class="note-type-btn" data-type="image">
+            <svg class="note-type-btn__icon" viewBox="0 0 24 24" width="20" height="20"><path d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 2v14h16V5H4zm3 8l2.5 3 3.5-4.5L17 16H7l0-3z" fill="currentColor"/></svg>
+            <span>图片</span>
+          </button>
+          <button class="note-type-btn" data-type="voice">
+            <svg class="note-type-btn__icon" viewBox="0 0 24 24" width="20" height="20"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zm0 2a1 1 0 0 0-1 1v6a1 1 0 0 0 2 0V5a1 1 0 0 0-1-1zm-4 9a4 4 0 0 0 8 0h2a6 6 0 0 1-5 5.91V21h-2v-2.09A6 6 0 0 1 6 13h2z" fill="currentColor"/></svg>
+            <span>语音</span>
+          </button>
+        </div>
+
+        <!-- Record area -->
+        <div class="record-area" id="recordArea">
+          <!-- Text input view -->
+          <div class="record-view record-view--active" id="viewText">
+            <div class="text-input-wrapper">
+              <textarea
+                class="text-input"
+                id="textInput"
+                placeholder="记录此刻的想法..."
+                rows="4"
+                maxlength="5000"
+              ></textarea>
+              <div class="text-input__footer">
+                <span class="text-input__counter" id="textCharCount">0/5000</span>
+                <button class="btn-send" id="btnSendText" disabled>
+                  <svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image input view -->
+          <div class="record-view" id="viewImage">
+            <div class="image-upload-area" id="imageUploadArea">
+              <div class="image-drop-zone" id="imageDropZone">
+                <svg viewBox="0 0 48 48" width="48" height="48" class="image-drop-zone__icon"><path d="M8 8h32a2 2 0 0 1 2 2v28a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 2v24h28V10H10zm6 12l4 5.5L25 21l6 9H10l6-9zm2-4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill="currentColor"/></svg>
+                <p class="image-drop-zone__text">点击选择或拖拽图片</p>
+                <p class="image-drop-zone__hint">支持 JPG、PNG、WebP，最大 20MB</p>
+              </div>
+              <input type="file" accept="image/*" id="imageFileInput" class="image-file-input">
+            </div>
+            <div class="image-preview hidden" id="imagePreview">
+              <img id="imagePreviewImg" class="image-preview__img" alt="预览">
+              <button class="image-preview__remove" id="btnRemoveImage">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+              </button>
+            </div>
+            <div class="image-caption-wrapper hidden" id="imageCaptionWrapper">
+              <textarea
+                class="image-caption-input"
+                id="imageCaptionInput"
+                placeholder="添加文字描述（可选）..."
+                rows="2"
+                maxlength="2000"
+              ></textarea>
+              <button class="btn-send" id="btnSendImage" disabled>
+                <svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Voice input view -->
+          <div class="record-view" id="viewVoice">
+            <div class="voice-recorder" id="voiceRecorder">
+              <div class="voice-recorder__visual" id="voiceVisual">
+                <canvas id="voiceWaveform" class="voice-waveform" width="280" height="80"></canvas>
+                <div class="voice-recorder__timer" id="voiceTimer">00:00</div>
+              </div>
+              <div class="voice-recorder__status" id="voiceStatus">点击开始录音</div>
+              <button class="voice-record-btn" id="btnVoiceRecord">
+                <svg class="voice-record-btn__icon" viewBox="0 0 24 24" width="32" height="32"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI processing overlay -->
+        <div class="ai-processing hidden" id="aiProcessing">
+          <div class="ai-processing__dots">
+            <span class="ai-processing__dot"></span>
+            <span class="ai-processing__dot"></span>
+            <span class="ai-processing__dot"></span>
+          </div>
+          <span class="ai-processing__text">AI 整理中...</span>
+        </div>
+
+        <!-- Sent confirmation toast -->
+        <div class="toast hidden" id="toast">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
+          <span id="toastText">已保存</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Memory Bank -->
+    <div id="page-memory" class="page">
+      <header class="page-header">
+        <h1 class="page-header__title">记忆库</h1>
+        <span class="page-header__subtitle" id="memoryNoteCount">0 条记录</span>
+      </header>
+      <div class="memory-content">
+        <!-- Calendar strip -->
+        <div class="calendar-strip-wrapper">
+          <div class="calendar-strip" id="calendarStrip">
+            <!-- Dynamically rendered -->
+          </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-bar-wrapper">
+          <div class="search-bar">
+            <svg class="search-bar__icon" viewBox="0 0 24 24" width="18" height="18"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg>
+            <input
+              type="search"
+              class="search-bar__input"
+              id="searchInput"
+              placeholder="搜索记录、标题、标签..."
+              autocomplete="off"
+            >
+            <button class="search-bar__clear hidden" id="btnClearSearch">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline feed -->
+        <div class="timeline" id="timeline">
+          <div class="timeline__empty hidden" id="timelineEmpty">
+            <svg viewBox="0 0 64 64" width="64" height="64" class="timeline__empty-icon"><path d="M32 8C18.7 8 8 18.7 8 32s10.7 24 24 24 24-10.7 24-24S45.3 8 32 8zm0 44c-11 0-20-9-20-20s9-20 20-20 20 9 20 20-9 20-20 20zm-4-28h8v8h-8v-8zm0 12h8v8h-8v-8z" fill="currentColor"/></svg>
+            <p class="timeline__empty-text">还没有记录</p>
+            <p class="timeline__empty-hint">去首页记录第一条碎片吧</p>
+          </div>
+          <div class="timeline__list" id="timelineList">
+            <!-- Dynamically rendered -->
+          </div>
+          <div class="timeline__loading hidden" id="timelineLoading">
+            <div class="spinner"></div>
+            <span>加载中...</span>
+          </div>
+          <div class="timeline__sentinel" id="timelineSentinel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Profile -->
+    <div id="page-profile" class="page">
+      <header class="page-header">
+        <h1 class="page-header__title">我的</h1>
+      </header>
+      <div class="profile-content">
+        <!-- User section -->
+        <div class="profile-card">
+          <div class="profile-card__avatar" id="profileAvatar">
+            <svg viewBox="0 0 24 24" width="40" height="40"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg>
+          </div>
+          <div class="profile-card__info">
+            <div class="profile-card__name" id="profileName">未登录</div>
+            <div class="profile-card__meta" id="profileMeta">登录以同步数据</div>
+          </div>
+          <button class="profile-card__action" id="btnLogin">登录</button>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="quick-stats" id="quickStats">
+          <div class="quick-stat">
+            <div class="quick-stat__value" id="statTotal">0</div>
+            <div class="quick-stat__label">总记录</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat__value" id="statText">0</div>
+            <div class="quick-stat__label">文字</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat__value" id="statImage">0</div>
+            <div class="quick-stat__label">图片</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat__value" id="statVoice">0</div>
+            <div class="quick-stat__label">语音</div>
+          </div>
+        </div>
+
+        <!-- Weekly report -->
+        <div class="stats-section">
+          <div class="stats-section__header">
+            <h3 class="stats-section__title">周度报告</h3>
+            <div class="stats-section__nav">
+              <button class="stats-nav-btn" id="btnPrevWeek">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
+              </button>
+              <span class="stats-section__range" id="weekRange">--</span>
+              <button class="stats-nav-btn" id="btnNextWeek">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-container" id="weekChart">
+            <div class="chart-empty">暂无数据</div>
+          </div>
+        </div>
+
+        <!-- Monthly report -->
+        <div class="stats-section">
+          <div class="stats-section__header">
+            <h3 class="stats-section__title">月度报告</h3>
+            <div class="stats-section__nav">
+              <button class="stats-nav-btn" id="btnPrevMonth">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
+              </button>
+              <span class="stats-section__range" id="monthRange">--</span>
+              <button class="stats-nav-btn" id="btnNextMonth">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-container" id="monthBarChart">
+            <div class="chart-empty">暂无数据</div>
+          </div>
+          <div class="chart-donut-wrapper" id="monthDonutChart">
+            <div class="chart-empty">暂无数据</div>
+          </div>
+        </div>
+
+        <!-- Storage info -->
+        <div class="storage-info">
+          <div class="storage-info__header">
+            <span>存储用量</span>
+            <span id="storageUsage">--</span>
+          </div>
+          <div class="storage-info__bar">
+            <div class="storage-info__fill" id="storageFill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Login modal -->
+        <div class="modal-overlay hidden" id="loginModal">
+          <div class="modal">
+            <div class="modal__header">
+              <h3 class="modal__title">登录随手记</h3>
+              <button class="modal__close" id="btnCloseModal">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+              </button>
+            </div>
+            <div class="modal__body">
+              <div class="form-group">
+                <label class="form-label">昵称</label>
+                <input type="text" class="form-input" id="inputNickname" placeholder="输入你的昵称" maxlength="20">
+              </div>
+              <div class="form-group">
+                <label class="form-label">邮箱（选填）</label>
+                <input type="email" class="form-input" id="inputEmail" placeholder="用于数据恢复">
+              </div>
+              <button class="btn-primary btn-block" id="btnConfirmLogin">确认登录</button>
+              <p class="modal__hint">登录后数据将同步至云端，更换设备不丢失</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <nav class="tab-bar">
+      <button class="tab-bar__item tab-bar__item--active" data-page="home">
+        <svg class="tab-bar__icon" viewBox="0 0 24 24" width="24" height="24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+        <span class="tab-bar__label">随手记</span>
+      </button>
+      <button class="tab-bar__item" data-page="memory">
+        <svg class="tab-bar__icon" viewBox="0 0 24 24" width="24" height="24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V9h14v10zm0-12H5V5h14v2zM7 11h5v5H7v-5z" fill="currentColor"/></svg>
+        <span class="tab-bar__label">记忆库</span>
+      </button>
+      <button class="tab-bar__item" data-page="profile">
+        <svg class="tab-bar__icon" viewBox="0 0 24 24" width="24" height="24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg>
+        <span class="tab-bar__label">我的</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+// ====== js/utils.js ======
+// ============================================================
+// utils.js — Utility helpers
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.uuid = function() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  };
+
+  App.formatTime = function(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (App.isSameDay(d, now)) return `今天 ${time}`;
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (App.isSameDay(d, yesterday)) return `昨天 ${time}`;
+    if (d.getFullYear() === now.getFullYear()) return `${d.getMonth() + 1}月${d.getDate()}日 ${time}`;
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${time}`;
+  };
+
+  App.formatDateLabel = function(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    if (App.isSameDay(d, now)) return '今天';
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (App.isSameDay(d, yesterday)) return '昨天';
+    const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${dayNames[d.getDay()]}`;
+  };
+
+  App.formatDuration = function(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  App.isSameDay = function(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  };
+
+  App.startOfDay = function(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+
+  App.endOfDay = function(date) {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  };
+
+  App.dateKey = function(ts) {
+    const d = new Date(ts);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+  App.debounce = function(fn, delay) {
+    let timer = null;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  };
+
+  App.escapeHTML = function(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  App.formatSize = function(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  App.weekRangeStr = function(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${monday.getMonth() + 1}/${pad(monday.getDate())} - ${sunday.getMonth() + 1}/${pad(sunday.getDate())}`;
+  };
+
+  App.monthRangeStr = function(date) {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+  };
+
+  App.getWeekDates = function(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    monday.setHours(0, 0, 0, 0);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(monday);
+      dt.setDate(monday.getDate() + i);
+      dates.push(dt);
+    }
+    return dates;
+  };
+
+  App.getMonthDays = function(year, month) {
+    const days = [];
+    const date = new Date(year, month, 1);
+    while (date.getMonth() === month) {
+      days.push(new Date(date));
+      date.setDate(date.getDate() + 1);
+    }
+    return days;
+  };
+
+  App.WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
+
+})();
+
+
+// ====== js/db.js ======
+// ============================================================
+// db.js — IndexedDB wrapper
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  const DB_NAME = 'suishouji-db';
+  const DB_VERSION = 1;
+  let dbPromise = null;
+
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (event.oldVersion < 1) {
+          const notesStore = db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+          notesStore.createIndex('byDate', 'createdAt', { unique: false });
+          notesStore.createIndex('byType', 'type', { unique: false });
+          notesStore.createIndex('byTitle', 'aiTitle', { unique: false });
+          notesStore.createIndex('byTag', 'aiTags', { unique: false, multiEntry: true });
+          db.createObjectStore('settings', { keyPath: 'key' });
+        }
+      };
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+      request.onblocked = () => console.warn('IndexedDB blocked');
+    });
+    return dbPromise;
+  }
+
+  App.saveNote = async function(note) {
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readwrite');
+    const store = tx.objectStore('notes');
+    const record = { ...note, createdAt: note.createdAt || Date.now(), updatedAt: Date.now() };
+    return new Promise((resolve, reject) => {
+      const request = store.add(record);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getAllNotes = async function(options = {}) {
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readonly');
+    const store = tx.objectStore('notes');
+    const index = store.index('byDate');
+    const { startDate, endDate, limit = 100, offset = 0 } = options;
+    let range = null;
+    if (startDate !== undefined && endDate !== undefined) {
+      range = IDBKeyRange.bound(startDate, endDate);
+    }
+    const notes = [];
+    let count = 0, skipped = 0;
+    return new Promise((resolve, reject) => {
+      const request = index.openCursor(range, 'prev');
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor) { resolve(notes); return; }
+        if (skipped < offset) { skipped++; cursor.continue(); return; }
+        notes.push(cursor.value);
+        count++;
+        if (count >= limit) { resolve(notes); return; }
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getNotesByDate = async function(date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return App.getAllNotes({ startDate: start.getTime(), endDate: end.getTime(), limit: 1000 });
+  };
+
+  App.searchNotes = async function(query, limit = 100) {
+    if (!query || !query.trim()) return App.getAllNotes({ limit });
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readonly');
+    const store = tx.objectStore('notes');
+    const index = store.index('byDate');
+    const q = query.trim().toLowerCase();
+    const results = [];
+    return new Promise((resolve, reject) => {
+      const request = index.openCursor(null, 'prev');
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor || results.length >= limit) { resolve(results); return; }
+        const note = cursor.value;
+        const searchable = [note.textContent || '', note.voiceTranscript || '', note.aiTitle || '', ...(note.aiTags || [])].join(' ').toLowerCase();
+        if (searchable.includes(q)) results.push(note);
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getNoteCounts = async function() {
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readonly');
+    const store = tx.objectStore('notes');
+    const counts = { total: 0, text: 0, image: 0, voice: 0 };
+    return new Promise((resolve, reject) => {
+      const request = store.openCursor();
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor) { resolve(counts); return; }
+        counts.total++;
+        const type = cursor.value.type;
+        if (counts[type] !== undefined) counts[type]++;
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.deleteNote = async function(id) {
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readwrite');
+    const store = tx.objectStore('notes');
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getNoteById = async function(id) {
+    const db = await openDB();
+    const tx = db.transaction('notes', 'readonly');
+    const store = tx.objectStore('notes');
+    return new Promise((resolve, reject) => {
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getSetting = async function(key) {
+    const db = await openDB();
+    const tx = db.transaction('settings', 'readonly');
+    const store = tx.objectStore('settings');
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.setSetting = async function(key, value) {
+    const db = await openDB();
+    const tx = db.transaction('settings', 'readwrite');
+    const store = tx.objectStore('settings');
+    return new Promise((resolve, reject) => {
+      const request = store.put({ key, value });
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  App.getStorageUsage = async function() {
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      const estimate = await navigator.storage.estimate();
+      return { usage: estimate.usage || 0, quota: estimate.quota || 0, percent: estimate.quota ? Math.round((estimate.usage / estimate.quota) * 100) : 0 };
+    }
+    return { usage: 0, quota: 0, percent: 0 };
+  };
+
+})();
+
+
+// ====== js/state.js ======
+// ============================================================
+// state.js — Pub/sub state manager
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  const listeners = {};
+  const state = {
+    currentPage: 'home',
+    noteType: 'text',
+    searchQuery: '',
+    selectedDate: null,
+    user: null,
+    pendingImage: null,
+    weekOffset: 0,
+    monthOffset: 0,
+  };
+
+  App.subscribe = function(key, fn) {
+    if (!listeners[key]) listeners[key] = new Set();
+    listeners[key].add(fn);
+    return () => { listeners[key]?.delete(fn); };
+  };
+
+  App.emit = function(key, data) {
+    if (listeners[key]) {
+      listeners[key].forEach(fn => { try { fn(data); } catch(e) { console.error(e); } });
+    }
+  };
+
+  App.getState = function(key) { return state[key]; };
+
+  App.setState = function(key, value) {
+    const old = state[key];
+    state[key] = value;
+    App.emit(key, value);
+    App.emit('change', { key, oldValue: old, newValue: value });
+  };
+
+})();
+
+
+// ====== js/ai.js ======
+// ============================================================
+// ai.js — Simulated AI: title, tags, transcription
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.simulateDelay = function() {
+    return new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1000));
+  };
+
+  App.generateTitle = function(note) {
+    if (note.type === 'text' && note.textContent) {
+      const cleaned = note.textContent.trim().replace(/^[，,。.！!？?\s\n\r]+/, '').replace(/\s+/g, ' ');
+      if (cleaned.length > 0) return cleaned.slice(0, 25) + (cleaned.length > 25 ? '...' : '');
+    }
+    if (note.type === 'image') {
+      if (note.textContent && note.textContent.trim()) {
+        const c = note.textContent.trim().slice(0, 25);
+        return c + (note.textContent.trim().length > 25 ? '...' : '');
+      }
+      return `图片笔记 ${App.formatTime(note.createdAt || Date.now())}`;
+    }
+    if (note.type === 'voice') {
+      if (note.voiceTranscript && !note.voiceTranscript.startsWith('语音记录于')) {
+        return note.voiceTranscript.slice(0, 20) + (note.voiceTranscript.length > 20 ? '...' : '');
+      }
+      return `语音记录 ${App.formatTime(note.createdAt || Date.now())}`;
+    }
+    return '未命名笔记';
+  };
+
+  App.generateTags = function(note) {
+    const allText = [note.textContent || '', note.voiceTranscript || '', note.aiTitle || ''].join(' ');
+    if (!allText.trim()) {
+      if (note.type === 'image') return ['图片'];
+      if (note.type === 'voice') return ['语音'];
+      return ['笔记'];
+    }
+    const keywords = extractKeywords(allText);
+    const baseTags = [];
+    if (note.type === 'image') baseTags.push('图片');
+    if (note.type === 'voice') baseTags.push('语音');
+    const allTags = [...new Set([...keywords, ...baseTags])];
+    return allTags.slice(0, 4);
+  };
+
+  function extractKeywords(text) {
+    const tags = [];
+    const categories = [
+      { words: ['工作','项目','会议','汇报','计划','总结','方案','需求','进度','报告','老板','同事','客户','提案'], tag: '工作' },
+      { words: ['学习','课程','笔记','读书','考试','复习','知识','教程','文章','书籍','论文','研究'], tag: '学习' },
+      { words: ['生活','购物','清单','备忘','提醒','日常','家务','整理','清洁','美食','烹饪','食谱'], tag: '生活' },
+      { words: ['灵感','创意','想法','点子','设计','写作','创作','构思','思路'], tag: '灵感' },
+      { words: ['旅行','旅游','出行','攻略','景点','酒店','机票','行程','打卡'], tag: '旅行' },
+      { words: ['健康','运动','健身','跑步','饮食','睡眠','体检','瑜伽','冥想'], tag: '健康' },
+      { words: ['技术','代码','编程','开发','bug','API','前端','后端','算法','架构','部署'], tag: '技术' },
+      { words: ['阅读','书单','摘抄','读后感','金句','引用','名言'], tag: '阅读' },
+      { words: ['电影','音乐','剧集','综艺','播客','演出','展览','艺术'], tag: '娱乐' },
+      { words: ['财务','理财','投资','股票','基金','预算','消费','账单','收入'], tag: '财务' },
+      { words: ['重要','紧急','必须','截止','优先','关键'], tag: '重要' },
+      { words: ['待办','TODO','任务','事项','完成','进行中'], tag: '待办' },
+    ];
+    for (const cat of categories) {
+      for (const word of cat.words) {
+        if (text.includes(word)) { tags.push(cat.tag); break; }
+      }
+    }
+    return tags;
+  }
+
+  App.mockTranscribe = function(durationSeconds) {
+    const d = new Date();
+    const hour = d.getHours();
+    const tod = hour < 6 ? '凌晨' : hour < 9 ? '早上' : hour < 12 ? '上午' : hour < 14 ? '中午' : hour < 18 ? '下午' : '晚上';
+    const templates = [
+      `这是一段${tod}的语音记录，时长约${Math.round(durationSeconds)}秒。内容涉及日常事务的记录和整理。`,
+      `${tod}临时记录了一段想法，主要关于近期需要处理的一些事项和安排。`,
+      `随手记录了一些${tod}的灵感和待办事项，方便后续回顾和整理。`,
+      `${tod}语音备忘：记录了一些零散的想法和需要跟进的事情。`,
+      `一段${tod}的语音笔记，包含了一些日常琐事的记录和提醒事项。`
+    ];
+    return templates[Math.floor(Math.random() * templates.length)];
+  };
+
+  App.processWithAI = async function(note) {
+    await App.simulateDelay();
+    const enriched = { ...note };
+    if (note.type === 'voice' && !note.voiceTranscript && note.voiceDuration) {
+      enriched.voiceTranscript = App.mockTranscribe(note.voiceDuration);
+    }
+    enriched.aiTitle = App.generateTitle(enriched);
+    enriched.aiTags = App.generateTags(enriched);
+    return enriched;
+  };
+
+})();
+
+
+// ====== js/components/calendar-strip.js ======
+// ============================================================
+// calendar-strip.js — Horizontal scrollable calendar
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.renderCalendarStrip = async function(selectedDate = null) {
+    const stripEl = document.getElementById('calendarStrip');
+    if (!stripEl) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const startDate = new Date(today); startDate.setDate(today.getDate() - 15);
+    const endDate = new Date(today); endDate.setDate(today.getDate() + 14);
+    endDate.setHours(23, 59, 59, 999);
+
+    const notes = await App.getAllNotes({ startDate: startDate.getTime(), endDate: endDate.getTime(), limit: 10000 });
+    const dateMap = {};
+    for (const note of notes) {
+      const key = App.dateKey(note.createdAt);
+      if (!dateMap[key]) dateMap[key] = { count: 0, firstThumbnail: null, hasImage: false };
+      dateMap[key].count++;
+      if (note.type === 'image' && note.imageThumbnail && !dateMap[key].hasImage) {
+        dateMap[key].hasImage = true;
+        dateMap[key].firstThumbnail = note.imageThumbnail;
+      }
+    }
+
+    stripEl.innerHTML = '';
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      stripEl.appendChild(renderDayCell(current, dateMap, selectedDate));
+      current.setDate(current.getDate() + 1);
+    }
+
+    setTimeout(() => {
+      const todayEl = stripEl.querySelector('.calendar-day--today');
+      if (todayEl) todayEl.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    }, 100);
+  };
+
+  function renderDayCell(date, dateMap, selectedDate) {
+    const key = App.dateKey(date);
+    const info = dateMap[key];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day';
+    cell.dataset.date = date.toISOString();
+    if (App.isSameDay(date, today)) cell.classList.add('calendar-day--today');
+    if (selectedDate && App.isSameDay(date, selectedDate)) cell.classList.add('calendar-day--selected');
+
+    const weekday = document.createElement('div');
+    weekday.className = 'calendar-day__weekday';
+    weekday.textContent = App.WEEKDAY_NAMES[date.getDay()];
+    cell.appendChild(weekday);
+
+    const dateEl = document.createElement('div');
+    dateEl.className = 'calendar-day__date';
+    dateEl.textContent = date.getDate();
+    cell.appendChild(dateEl);
+
+    if (info && info.hasImage && info.firstThumbnail) {
+      const thumb = document.createElement('img');
+      thumb.className = 'calendar-day__thumbnail';
+      thumb.src = URL.createObjectURL(info.firstThumbnail);
+      cell.appendChild(thumb);
+    } else if (info && info.count > 0) {
+      const dot = document.createElement('div');
+      dot.className = 'calendar-day__dot';
+      cell.appendChild(dot);
+    } else {
+      const spacer = document.createElement('div');
+      spacer.style.cssText = 'width:32px;height:32px;';
+      cell.appendChild(spacer);
+    }
+
+    if (info && info.count > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'calendar-day__badge';
+      badge.textContent = info.count > 99 ? '99+' : String(info.count);
+      cell.appendChild(badge);
+    }
+
+    cell.addEventListener('click', () => {
+      const prev = document.querySelector('.calendar-day--selected');
+      if (prev) prev.classList.remove('calendar-day--selected');
+      cell.classList.add('calendar-day--selected');
+      window.dispatchEvent(new CustomEvent('calendar-date-selected', { detail: { date: new Date(date) } }));
+    });
+
+    return cell;
+  }
+
+  App.setupCalendarListener = function(onDateSelected) {
+    window.addEventListener('calendar-date-selected', (e) => {
+      if (onDateSelected) onDateSelected(e.detail.date);
+    });
+  };
+
+})();
+
+
+// ====== js/components/search-bar.js ======
+// ============================================================
+// search-bar.js — Search input with debounce
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  let onSearchCallback = null;
+
+  App.initSearchBar = function(onSearch) {
+    onSearchCallback = onSearch;
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('btnClearSearch');
+    if (!searchInput) return;
+
+    const debouncedSearch = App.debounce((query) => { onSearchCallback(query); }, 300);
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      if (query) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+      debouncedSearch(query);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      onSearchCallback('');
+      searchInput.focus();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); onSearchCallback(searchInput.value.trim()); }
+    });
+  };
+
+  App.clearSearch = function() {
+    const input = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('btnClearSearch');
+    if (input) { input.value = ''; clearBtn.classList.add('hidden'); if (onSearchCallback) onSearchCallback(''); }
+  };
+
+})();
+
+
+// ====== js/components/voice-recorder.js ======
+// ============================================================
+// voice-recorder.js — MediaRecorder wrapper with waveform
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  let mediaRecorder = null, audioStream = null, audioChunks = [];
+  let recordingStartTime = 0, timerInterval = null, animationId = null;
+  let audioContext = null, analyser = null, wakeLock = null;
+
+  App.initVoiceRecorder = function({ onRecordingStart, onRecordingStop, onError }) {
+    const recordBtn = document.getElementById('btnVoiceRecord');
+    const timerEl = document.getElementById('voiceTimer');
+    const statusEl = document.getElementById('voiceStatus');
+    const canvas = document.getElementById('voiceWaveform');
+    const ctx = canvas.getContext('2d');
+    let isRecording = false;
+
+    drawIdleWaveform(ctx, canvas.width, canvas.height);
+
+    recordBtn.addEventListener('click', async () => {
+      if (isRecording) { await stopRecording(); }
+      else { await startRecording(); }
+    });
+
+    async function startRecording() {
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 16000 }
+        });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(audioStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.7;
+        source.connect(analyser);
+
+        const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm';
+        mediaRecorder = new MediaRecorder(audioStream, { mimeType, audioBitsPerSecond: 32000 });
+        audioChunks = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(audioChunks, { type: mimeType });
+          const duration = (Date.now() - recordingStartTime) / 1000;
+          if (audioStream) { audioStream.getTracks().forEach(t => t.stop()); audioStream = null; }
+          if (audioContext && audioContext.state !== 'closed') { audioContext.close(); audioContext = null; analyser = null; }
+          if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+          onRecordingStop({ blob, duration });
+        };
+        try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+        mediaRecorder.start(150);
+        recordingStartTime = Date.now();
+        isRecording = true;
+        recordBtn.classList.add('voice-record-btn--recording');
+        timerEl.classList.add('voice-recorder__timer--recording');
+        timerEl.textContent = '00:00';
+        statusEl.textContent = '录音中...';
+        timerInterval = setInterval(() => {
+          const elapsed = (Date.now() - recordingStartTime) / 1000;
+          timerEl.textContent = App.formatDuration(elapsed);
+          if (elapsed >= 270 && elapsed < 271) statusEl.textContent = '录音将在30秒后自动停止';
+          if (elapsed >= 300) stopRecording();
+        }, 200);
+        animateWaveform(ctx, canvas.width, canvas.height);
+        if (onRecordingStart) onRecordingStart();
+      } catch(err) {
+        console.error('Mic error:', err);
+        if (onError) onError(err);
+      }
+    }
+
+    async function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        await new Promise(resolve => {
+          const orig = mediaRecorder.onstop;
+          mediaRecorder.onstop = (e) => { if (orig) orig.call(mediaRecorder, e); resolve(); };
+        });
+      }
+      isRecording = false;
+      clearInterval(timerInterval); timerInterval = null;
+      cancelAnimationFrame(animationId); animationId = null;
+      recordBtn.classList.remove('voice-record-btn--recording');
+      timerEl.classList.remove('voice-recorder__timer--recording');
+      timerEl.textContent = '00:00';
+      statusEl.textContent = '点击开始录音';
+      drawIdleWaveform(ctx, canvas.width, canvas.height);
+    }
+  };
+
+  function drawIdleWaveform(ctx, w, h) {
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#E8E8ED'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+  }
+
+  function animateWaveform(ctx, w, h) {
+    if (!analyser) return;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    function draw() {
+      animationId = requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(dataArray);
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = '#E8E8ED'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+      ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const sliceWidth = w / bufferLength;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * h) / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      ctx.lineTo(w, h/2); ctx.stroke();
+    }
+    draw();
+  }
+
+  App.isVoiceSupported = function() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  };
+
+})();
+
+
+// ====== js/components/image-uploader.js ======
+// ============================================================
+// image-uploader.js — Image file input + drag-drop + thumbnail
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  let pendingFile = null, pendingThumbnail = null;
+  const MAX_FILE_SIZE = 20 * 1024 * 1024;
+  const THUMBNAIL_MAX_DIM = 200;
+
+  App.initImageUploader = function({ onFileSelected, onFileRemoved, onError }) {
+    const dropZone = document.getElementById('imageDropZone');
+    const fileInput = document.getElementById('imageFileInput');
+    const previewContainer = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('imagePreviewImg');
+    const captionWrapper = document.getElementById('imageCaptionWrapper');
+    const captionInput = document.getElementById('imageCaptionInput');
+    const removeBtn = document.getElementById('btnRemoveImage');
+    const sendBtn = document.getElementById('btnSendImage');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.add('image-drop-zone--active');
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove('image-drop-zone--active');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove('image-drop-zone--active');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    removeBtn.addEventListener('click', () => { clearImage(); if (onFileRemoved) onFileRemoved(); });
+
+    captionInput.addEventListener('input', () => { sendBtn.disabled = !pendingFile; });
+
+    sendBtn.addEventListener('click', () => {
+      if (pendingFile && onFileSelected) {
+        onFileSelected({ file: pendingFile, thumbnail: pendingThumbnail, caption: captionInput.value.trim() });
+      }
+    });
+
+    async function handleFile(file) {
+      if (!file.type.startsWith('image/')) { if (onError) onError('请选择图片文件'); return; }
+      if (file.size > MAX_FILE_SIZE) { if (onError) onError('图片大小不能超过20MB'); return; }
+      try {
+        const thumbnail = await generateThumbnail(file);
+        pendingFile = file; pendingThumbnail = thumbnail;
+        App.setState('pendingImage', { file, thumbnailBlob: thumbnail });
+        const url = URL.createObjectURL(thumbnail);
+        previewImg.src = url;
+        previewContainer.classList.remove('hidden');
+        dropZone.parentElement.style.display = 'none';
+        captionWrapper.classList.remove('hidden');
+        captionInput.value = '';
+        captionInput.focus();
+        sendBtn.disabled = false;
+      } catch(err) {
+        console.error('Image error:', err);
+        if (onError) onError('图片处理失败');
+      }
+    }
+
+    function clearImage() {
+      if (previewImg.src) URL.revokeObjectURL(previewImg.src);
+      pendingFile = null; pendingThumbnail = null;
+      App.setState('pendingImage', null);
+      previewContainer.classList.add('hidden');
+      previewImg.src = '';
+      dropZone.parentElement.style.display = 'block';
+      captionWrapper.classList.add('hidden');
+      captionInput.value = '';
+      sendBtn.disabled = true;
+    }
+  };
+
+  async function generateThumbnail(file, maxDim = THUMBNAIL_MAX_DIM) {
+    if ('createImageBitmap' in window) {
+      try {
+        const bitmap = await createImageBitmap(file, { resizeWidth: maxDim, resizeHeight: maxDim, resizeQuality: 'medium' });
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width; canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0); bitmap.close();
+        return new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('toBlob failed')); }, 'image/jpeg', 0.75);
+        });
+      } catch(e) { console.warn('createImageBitmap failed:', e); }
+    }
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('toBlob failed')); }, 'image/jpeg', 0.7);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+      img.src = url;
+    });
+  }
+
+  App.clearPendingImage = function() {
+    const previewImg = document.getElementById('imagePreviewImg');
+    const previewContainer = document.getElementById('imagePreview');
+    const dropZone = document.getElementById('imageDropZone');
+    const captionWrapper = document.getElementById('imageCaptionWrapper');
+    const captionInput = document.getElementById('imageCaptionInput');
+    const sendBtn = document.getElementById('btnSendImage');
+    if (previewImg && previewImg.src) URL.revokeObjectURL(previewImg.src);
+    pendingFile = null; pendingThumbnail = null;
+    App.setState('pendingImage', null);
+    if (previewContainer) previewContainer.classList.add('hidden');
+    if (previewImg) previewImg.src = '';
+    if (dropZone) dropZone.parentElement.style.display = 'block';
+    if (captionWrapper) captionWrapper.classList.add('hidden');
+    if (captionInput) captionInput.value = '';
+    if (sendBtn) sendBtn.disabled = true;
+  };
+
+})();
+
+
+// ====== js/components/note-card.js ======
+// ============================================================
+// note-card.js — Note card renderer
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.renderNoteCard = function(note) {
+    const card = document.createElement('div');
+    card.className = `note-card note-card--${note.type}`;
+    card.dataset.noteId = note.id;
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'note-card__header';
+    const title = document.createElement('div');
+    title.className = 'note-card__title';
+    title.textContent = note.aiTitle || '未命名笔记';
+    const time = document.createElement('span');
+    time.className = 'note-card__time';
+    time.textContent = App.formatTime(note.createdAt);
+    header.appendChild(title); header.appendChild(time);
+
+    // Delete
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'note-card__delete';
+    deleteBtn.innerHTML = '✕';
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm('确定删除这条记录吗？')) {
+        await App.deleteNote(note.id);
+        card.style.transition = 'all 0.2s ease';
+        card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
+        card.style.maxHeight = card.offsetHeight + 'px';
+        requestAnimationFrame(() => { card.style.maxHeight = '0'; card.style.padding = '0'; card.style.marginBottom = '0'; });
+        setTimeout(() => { card.remove(); window.dispatchEvent(new CustomEvent('note-deleted', { detail: { id: note.id } })); }, 250);
+      }
+    });
+    card.appendChild(deleteBtn);
+    card.appendChild(header);
+
+    // Body
+    if (note.type === 'image' && note.imageThumbnail) {
+      const img = document.createElement('img');
+      img.className = 'note-card__image';
+      img.src = URL.createObjectURL(note.imageThumbnail);
+      img.alt = note.aiTitle || '图片';
+      img.loading = 'lazy';
+      img._objectUrl = img.src;
+      card.appendChild(img);
+      if (note.textContent) {
+        const body = document.createElement('div');
+        body.className = 'note-card__body';
+        body.textContent = note.textContent;
+        card.appendChild(body);
+      }
+    } else if (note.type === 'voice') {
+      const vc = document.createElement('div');
+      vc.className = 'note-card__voice';
+      const playBtn = document.createElement('button');
+      playBtn.className = 'note-card__play-btn';
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+      const playIcon = playBtn.querySelector('svg');
+      let audio = null, isPlaying = false;
+      playBtn.addEventListener('click', () => {
+        if (!audio && note.voiceBlob) {
+          const url = URL.createObjectURL(note.voiceBlob);
+          audio = new Audio(url); audio._objectUrl = url;
+          audio.addEventListener('ended', () => { isPlaying = false; playBtn.classList.remove('note-card__play-btn--playing'); playIcon.innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor"/>'; });
+          audio.addEventListener('error', () => { isPlaying = false; playBtn.classList.remove('note-card__play-btn--playing'); playIcon.innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor"/>'; });
+        }
+        if (audio) {
+          if (isPlaying) { audio.pause(); isPlaying = false; playBtn.classList.remove('note-card__play-btn--playing'); playIcon.innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor"/>'; }
+          else { audio.play(); isPlaying = true; playBtn.classList.add('note-card__play-btn--playing'); playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'; }
+        }
+      });
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'note-card__voice-info';
+      const durEl = document.createElement('div');
+      durEl.className = 'note-card__voice-duration';
+      durEl.textContent = `语音 ${App.formatDuration(note.voiceDuration || 0)}`;
+      const transEl = document.createElement('div');
+      transEl.className = 'note-card__voice-transcript';
+      transEl.textContent = note.voiceTranscript || '(转写中...)';
+      infoDiv.appendChild(durEl); infoDiv.appendChild(transEl);
+      vc.appendChild(playBtn); vc.appendChild(infoDiv);
+      card.appendChild(vc);
+      if (note.voiceTranscript) {
+        const tf = document.createElement('div');
+        tf.className = 'note-card__body';
+        tf.style.cssText = 'margin-top:8px;font-size:13px;color:#8E8E93;';
+        tf.textContent = note.voiceTranscript;
+        card.appendChild(tf);
+      }
+    } else if (note.type === 'text' || note.textContent) {
+      const body = document.createElement('div');
+      body.className = 'note-card__body';
+      body.textContent = note.textContent || '';
+      card.appendChild(body);
+    }
+
+    // Tags
+    if (note.aiTags && note.aiTags.length > 0) {
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'note-card__tags';
+      note.aiTags.forEach(tag => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'note-card__tag';
+        tagEl.textContent = tag;
+        tagsDiv.appendChild(tagEl);
+      });
+      card.appendChild(tagsDiv);
+    }
+
+    return card;
+  };
+
+})();
+
+
+// ====== js/components/timeline.js ======
+// ============================================================
+// timeline.js — Infinite scroll timeline feed
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  const PAGE_SIZE = 20;
+  let allLoaded = false, currentNotes = [], observer = null, isLoading = false;
+
+  App.initTimeline = function() {
+    const sentinel = document.getElementById('timelineSentinel');
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(async (entries) => {
+      if (entries[0].isIntersecting && !isLoading && !allLoaded) await loadMore();
+    }, { root: document.querySelector('.timeline'), rootMargin: '200px', threshold: 0 });
+    observer.observe(sentinel);
+  };
+
+  App.renderTimeline = async function(options = {}) {
+    const { searchQuery = '', selectedDate = null, reset = true } = options;
+    const listEl = document.getElementById('timelineList');
+    const emptyEl = document.getElementById('timelineEmpty');
+    const loadingEl = document.getElementById('timelineLoading');
+    const countEl = document.getElementById('memoryNoteCount');
+
+    if (reset) { listEl.innerHTML = ''; allLoaded = false; currentNotes = []; isLoading = false; }
+
+    try {
+      isLoading = true;
+      loadingEl.classList.remove('hidden');
+      let notes;
+      if (searchQuery) { notes = await App.searchNotes(searchQuery, PAGE_SIZE); }
+      else if (selectedDate) { notes = await App.getNotesByDate(selectedDate); }
+      else { notes = await App.getAllNotes({ limit: PAGE_SIZE }); }
+
+      const counts = await App.getNoteCounts();
+      if (countEl) countEl.textContent = `${counts.total} 条记录`;
+
+      allLoaded = notes.length < PAGE_SIZE;
+      currentNotes = notes;
+      loadingEl.classList.add('hidden');
+
+      if (notes.length === 0 && reset) { emptyEl.classList.remove('hidden'); listEl.innerHTML = ''; return; }
+      emptyEl.classList.add('hidden');
+
+      const grouped = groupByDate(notes);
+      for (const [dateStr, dateNotes] of Object.entries(grouped)) {
+        const divider = document.createElement('div');
+        divider.className = 'timeline-date-divider';
+        divider.textContent = App.formatDateLabel(dateNotes[0].createdAt);
+        listEl.appendChild(divider);
+        for (const note of dateNotes) { listEl.appendChild(App.renderNoteCard(note)); }
+      }
+    } catch(err) {
+      console.error('Timeline error:', err);
+    } finally {
+      isLoading = false;
+      loadingEl.classList.add('hidden');
+    }
+  };
+
+  async function loadMore() {
+    const listEl = document.getElementById('timelineList');
+    const loadingEl = document.getElementById('timelineLoading');
+    const searchInput = document.getElementById('searchInput');
+    const selEl = document.querySelector('.calendar-day--selected');
+    const searchQuery = searchInput ? searchInput.value.trim() : '';
+    const selectedDate = selEl ? selEl.dataset.date : null;
+    if (searchQuery || selectedDate) { allLoaded = true; return; }
+
+    try {
+      isLoading = true;
+      loadingEl.classList.remove('hidden');
+      const offset = currentNotes.length;
+      const notes = await App.getAllNotes({ limit: PAGE_SIZE, offset });
+      allLoaded = notes.length < PAGE_SIZE;
+      if (notes.length > 0) {
+        currentNotes = [...currentNotes, ...notes];
+        const grouped = groupByDate(notes);
+        for (const [dateStr, dateNotes] of Object.entries(grouped)) {
+          const divider = document.createElement('div');
+          divider.className = 'timeline-date-divider';
+          divider.textContent = App.formatDateLabel(dateNotes[0].createdAt);
+          listEl.appendChild(divider);
+          for (const note of dateNotes) { listEl.appendChild(App.renderNoteCard(note)); }
+        }
+      }
+    } catch(err) { console.error('Load more error:', err); }
+    finally { isLoading = false; loadingEl.classList.add('hidden'); }
+  }
+
+  function groupByDate(notes) {
+    const groups = {};
+    for (const note of notes) {
+      const key = App.dateKey(note.createdAt);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(note);
+    }
+    return groups;
+  }
+
+  App.refreshTimeline = async function() {
+    await App.renderTimeline({ reset: true });
+    App.initTimeline();
+  };
+
+  App.setupDeleteListener = function() {
+    window.addEventListener('note-deleted', async (e) => {
+      currentNotes = currentNotes.filter(n => n.id !== e.detail.id);
+      const counts = await App.getNoteCounts();
+      const countEl = document.getElementById('memoryNoteCount');
+      if (countEl) countEl.textContent = `${counts.total} 条记录`;
+      if (currentNotes.length === 0) {
+        const emptyEl = document.getElementById('timelineEmpty');
+        if (emptyEl) emptyEl.classList.remove('hidden');
+      }
+    });
+  };
+
+})();
+
+
+// ====== js/components/tab-bar.js ======
+// ============================================================
+// tab-bar.js — Bottom tab navigation
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.initTabBar = function() {
+    const tabItems = document.querySelectorAll('.tab-bar__item');
+    tabItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        if (page && page !== App.getState('currentPage')) {
+          App.switchPage(page);
+        }
+      });
+    });
+    window.addEventListener('navigate', (e) => { App.switchPage(e.detail.page, false); });
+  };
+
+  App.switchPage = function(page, updateState = true) {
+    document.querySelectorAll('.tab-bar__item').forEach(item => {
+      item.classList.toggle('tab-bar__item--active', item.dataset.page === page);
+    });
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.toggle('page--active', p.id === `page-${page}`);
+    });
+    if (updateState) App.setState('currentPage', page);
+    const pageEl = document.getElementById(`page-${page}`);
+    if (pageEl) pageEl.scrollTop = 0;
+    window.dispatchEvent(new CustomEvent('page-changed', { detail: { page } }));
+  };
+
+})();
+
+
+// ====== js/components/charts.js ======
+// ============================================================
+// charts.js — SVG-based bar chart and donut chart
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.renderWeekChart = async function(containerId, referenceDate) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const dates = App.getWeekDates(referenceDate);
+    const startDate = App.startOfDay(dates[0]);
+    const endDate = App.endOfDay(dates[6]);
+
+    const notes = await App.getAllNotes({ startDate, endDate, limit: 10000 });
+    const dayCounts = {}, dayTypes = {};
+    for (const note of notes) {
+      const key = App.dateKey(note.createdAt);
+      if (!dayCounts[key]) { dayCounts[key] = 0; dayTypes[key] = { text: 0, image: 0, voice: 0 }; }
+      dayCounts[key]++;
+      if (dayTypes[key][note.type] !== undefined) dayTypes[key][note.type]++;
+    }
+
+    const data = dates.map(d => ({
+      label: App.WEEKDAY_NAMES[d.getDay()],
+      count: dayCounts[App.dateKey(d)] || 0
+    }));
+    const maxCount = Math.max(...data.map(d => d.count), 1);
+
+    if (data.every(d => d.count === 0)) {
+      container.innerHTML = '<div class="chart-empty">本周暂无记录</div>';
+      return;
+    }
+
+    const width = container.clientWidth - 32 || 320;
+    const height = 140;
+    const pad = { top: 10, right: 10, bottom: 22, left: 10 };
+    const cw = width - pad.left - pad.right, ch = height - pad.top - pad.bottom;
+    const barWidth = Math.floor((cw / 7) - 6);
+    const gap = (cw - barWidth * 7) / 6;
+
+    let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+    for (let i = 0; i <= 3; i++) {
+      const y = pad.top + (ch / 3) * i;
+      const val = Math.round(maxCount * (1 - i / 3));
+      svg += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#F0F0F5" stroke-width="1"/>`;
+      svg += `<text x="${pad.left - 4}" y="${y + 4}" text-anchor="end" font-size="10" fill="#C7C7CC">${val}</text>`;
+    }
+    let x = pad.left;
+    const todayDayOfWeek = new Date().getDay();
+    data.forEach((d, i) => {
+      const barH = maxCount > 0 ? (d.count / maxCount) * ch : 0;
+      const y = pad.top + ch - barH;
+      const isToday = (i === todayDayOfWeek - 1) || (todayDayOfWeek === 0 && i === 6);
+      svg += `<rect x="${x}" y="${y}" width="${barWidth}" height="${Math.max(barH, 1)}" rx="4" fill="#4A90D9" opacity="${isToday ? '1' : '0.6'}"/>`;
+      if (d.count > 0) svg += `<text x="${x + barWidth / 2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="#8E8E93" font-weight="600">${d.count}</text>`;
+      svg += `<text x="${x + barWidth / 2}" y="${height - 4}" text-anchor="middle" font-size="10" fill="${isToday ? '#4A90D9' : '#8E8E93'}" font-weight="${isToday ? '600' : '400'}">${d.label}</text>`;
+      x += barWidth + gap;
+    });
+    svg += '</svg>';
+    container.innerHTML = svg;
+  };
+
+  App.renderMonthChart = async function(containerId, year, month) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const days = App.getMonthDays(year, month);
+    const startDate = App.startOfDay(days[0]);
+    const endDate = App.endOfDay(days[days.length - 1]);
+
+    const notes = await App.getAllNotes({ startDate, endDate, limit: 10000 });
+    const dayCounts = {};
+    for (const note of notes) {
+      const key = App.dateKey(note.createdAt);
+      dayCounts[key] = (dayCounts[key] || 0) + 1;
+    }
+    const data = days.map(d => ({ date: d.getDate(), count: dayCounts[App.dateKey(d)] || 0 }));
+    const maxCount = Math.max(...data.map(d => d.count), 1);
+
+    if (data.every(d => d.count === 0)) {
+      container.innerHTML = '<div class="chart-empty">本月暂无记录</div>';
+      return;
+    }
+
+    const width = container.clientWidth - 32 || 320;
+    const cellSize = Math.floor(width / 7) - 2;
+    const firstDay = days[0].getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    const rows = Math.ceil((offset + days.length) / 7);
+    const height = rows * (cellSize + 2) + 18;
+
+    let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+    ['一','二','三','四','五','六','日'].forEach((day, i) => {
+      svg += `<text x="${i * (cellSize + 2) + cellSize / 2}" y="10" text-anchor="middle" font-size="9" fill="#C7C7CC">${day}</text>`;
+    });
+    data.forEach((d, i) => {
+      const col = (offset + i) % 7;
+      const row = Math.floor((offset + i) / 7) + 1;
+      const rx = col * (cellSize + 2);
+      const ry = row * (cellSize + 2) + 5;
+      const intensity = maxCount > 0 ? d.count / maxCount : 0;
+      const alpha = 0.08 + intensity * 0.92;
+      svg += `<rect x="${rx}" y="${ry}" width="${cellSize}" height="${cellSize}" rx="3" fill="#4A90D9" opacity="${alpha}"/>`;
+      if (d.count > 0) svg += `<text x="${rx + cellSize / 2}" y="${ry + cellSize / 2 + 3}" text-anchor="middle" font-size="9" fill="${intensity > 0.6 ? 'white' : '#4A90D9'}" font-weight="600">${d.count}</text>`;
+    });
+    svg += '</svg>';
+    container.innerHTML = svg;
+  };
+
+  App.renderDonutChart = async function(containerId, startDate, endDate) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const notes = await App.getAllNotes({ startDate: startDate.getTime(), endDate: endDate.getTime(), limit: 10000 });
+    const counts = { text: 0, image: 0, voice: 0 };
+    for (const note of notes) { if (counts[note.type] !== undefined) counts[note.type]++; }
+    const total = counts.text + counts.image + counts.voice;
+    if (total === 0) { container.innerHTML = '<div class="chart-empty">暂无数据</div>'; return; }
+
+    const colors = { text: '#4A90D9', image: '#4ECDC4', voice: '#FF6B6B' };
+    const labels = { text: '文字', image: '图片', voice: '语音' };
+    const size = 160, center = size / 2, radius = 60, sw = 18, circ = 2 * Math.PI * radius;
+
+    let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+    svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#F0F0F5" stroke-width="${sw}"/>`;
+    let off = 0;
+    ['text','image','voice'].forEach(type => {
+      if (counts[type] === 0) return;
+      const ratio = counts[type] / total;
+      const dash = ratio * circ;
+      svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="${colors[type]}" stroke-width="${sw}" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-off}" transform="rotate(-90 ${center} ${center})" stroke-linecap="round"/>`;
+      off += dash;
+    });
+    svg += `<text x="${center}" y="${center - 6}" text-anchor="middle" font-size="20" font-weight="700" fill="#1A1A2E">${total}</text>`;
+    svg += `<text x="${center}" y="${center + 14}" text-anchor="middle" font-size="11" fill="#8E8E93">总计</text>`;
+    svg += '</svg>';
+
+    let legend = '<div style="display:flex;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap;">';
+    ['text','image','voice'].forEach(type => {
+      if (counts[type] === 0) return;
+      const pct = Math.round((counts[type] / total) * 100);
+      legend += `<div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#8E8E93;"><span style="width:8px;height:8px;border-radius:50%;background:${colors[type]};display:inline-block;"></span>${labels[type]} ${counts[type]} (${pct}%)</div>`;
+    });
+    legend += '</div>';
+    container.innerHTML = svg + legend;
+  };
+
+})();
+
+
+// ====== js/pages/home.js ======
+// ============================================================
+// home.js — Home page: Quick record
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  App.mountHomePage = function() {
+    initNoteTypeSelector();
+    initTextInput();
+    initImageSection();
+    initVoiceSection();
+
+    if (!App.isVoiceSupported()) {
+      const voiceBtn = document.querySelector('[data-type="voice"]');
+      if (voiceBtn) { voiceBtn.style.opacity = '0.4'; voiceBtn.title = '当前浏览器不支持录音'; }
+    }
+  };
+
+  App.unmountHomePage = function() {};
+
+  function initNoteTypeSelector() {
+    const buttons = document.querySelectorAll('.note-type-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        buttons.forEach(b => b.classList.remove('note-type-btn--active'));
+        btn.classList.add('note-type-btn--active');
+        document.querySelectorAll('.record-view').forEach(v => v.classList.remove('record-view--active'));
+        const viewMap = { text: 'viewText', image: 'viewImage', voice: 'viewVoice' };
+        const viewEl = document.getElementById(viewMap[type]);
+        if (viewEl) viewEl.classList.add('record-view--active');
+        App.setState('noteType', type);
+      });
+    });
+  }
+
+  function initTextInput() {
+    const textInput = document.getElementById('textInput');
+    const charCount = document.getElementById('textCharCount');
+    const sendBtn = document.getElementById('btnSendText');
+    if (!textInput) return;
+
+    textInput.addEventListener('input', () => {
+      const len = textInput.value.length;
+      charCount.textContent = `${len}/5000`;
+      sendBtn.disabled = len === 0;
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      const content = textInput.value.trim();
+      if (!content) return;
+      sendBtn.disabled = true;
+      showAI(true);
+      try {
+        const note = await App.processWithAI({ type: 'text', textContent: content });
+        await App.saveNote(note);
+        textInput.value = '';
+        charCount.textContent = '0/5000';
+        showToast('文字记录已保存');
+        App.refreshTimeline();
+      } catch(err) {
+        console.error('Save text error:', err);
+        showToast('保存失败，请重试', true);
+      } finally {
+        showAI(false);
+        sendBtn.disabled = false;
+      }
+    });
+
+    window.addEventListener('page-changed', (e) => {
+      if (e.detail.page === 'home' && App.getState('noteType') === 'text') {
+        setTimeout(() => textInput.focus(), 300);
+      }
+    });
+    setTimeout(() => textInput.focus(), 500);
+  }
+
+  function initImageSection() {
+    App.initImageUploader({
+      onFileSelected: async ({ file, thumbnail, caption }) => {
+        showAI(true);
+        try {
+          const note = await App.processWithAI({ type: 'image', textContent: caption || '', imageBlob: file, imageThumbnail: thumbnail });
+          await App.saveNote(note);
+          App.clearPendingImage();
+          showToast('图片记录已保存');
+          App.refreshTimeline();
+        } catch(err) {
+          console.error('Save image error:', err);
+          showToast('保存失败，请重试', true);
+        } finally { showAI(false); }
+      },
+      onFileRemoved: () => {},
+      onError: (msg) => showToast(msg, true)
+    });
+  }
+
+  function initVoiceSection() {
+    App.initVoiceRecorder({
+      onRecordingStart: () => {},
+      onRecordingStop: async ({ blob, duration }) => {
+        showAI(true);
+        try {
+          const note = await App.processWithAI({ type: 'voice', voiceBlob: blob, voiceDuration: duration });
+          await App.saveNote(note);
+          showToast('语音记录已保存');
+          App.refreshTimeline();
+        } catch(err) {
+          console.error('Save voice error:', err);
+          showToast('保存失败，请重试', true);
+        } finally { showAI(false); }
+      },
+      onError: (err) => {
+        if (err.name === 'NotAllowedError') showToast('请允许使用麦克风', true);
+        else if (err.name === 'NotFoundError') showToast('未检测到麦克风设备', true);
+        else showToast('录音失败，请重试', true);
+      }
+    });
+  }
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    if (!toast) return;
+    toast.classList.remove('toast--visible', 'toast--error');
+    toastText.textContent = message;
+    if (isError) toast.classList.add('toast--error');
+    void toast.offsetWidth;
+    toast.classList.add('toast--visible');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('toast--visible'), 2000);
+  }
+
+  function showAI(show) {
+    const overlay = document.getElementById('aiProcessing');
+    if (overlay) { if (show) overlay.classList.remove('hidden'); else overlay.classList.add('hidden'); }
+  }
+
+})();
+
+
+// ====== js/pages/memory-bank.js ======
+// ============================================================
+// memory-bank.js — Memory Bank page
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  let currentSelectedDate = null;
+  let currentSearchQuery = '';
+
+  App.mountMemoryBankPage = async function() {
+    await App.renderCalendarStrip(null);
+
+    App.setupCalendarListener(async (date) => {
+      currentSelectedDate = date;
+      App.clearSearch();
+      currentSearchQuery = '';
+      await App.renderTimeline({ selectedDate: date, searchQuery: '', reset: true });
+      App.initTimeline();
+    });
+
+    App.initSearchBar(async (query) => {
+      currentSearchQuery = query;
+      if (query) { currentSelectedDate = null; await App.renderCalendarStrip(null); }
+      await App.renderTimeline({ searchQuery: query, selectedDate: null, reset: true });
+      App.initTimeline();
+    });
+
+    await App.renderTimeline({ reset: true });
+    App.initTimeline();
+    App.setupDeleteListener();
+  };
+
+  App.unmountMemoryBankPage = function() {};
+
+  App.refreshMemoryBank = async function() {
+    await App.renderCalendarStrip(currentSelectedDate);
+    await App.renderTimeline({ searchQuery: currentSearchQuery, selectedDate: currentSelectedDate, reset: true });
+    App.initTimeline();
+  };
+
+})();
+
+
+// ====== js/pages/profile.js ======
+// ============================================================
+// profile.js — Profile page: login, stats, storage
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+  let weekOffset = 0, monthOffset = 0;
+
+  App.mountProfilePage = async function() {
+    await loadUserInfo();
+    await loadQuickStats();
+    await loadWeeklyReport();
+    await loadMonthlyReport();
+    await loadStorageInfo();
+    initLoginModal();
+    initWeekNav();
+    initMonthNav();
+  };
+
+  App.unmountProfilePage = function() {};
+
+  async function loadUserInfo() {
+    const user = await App.getSetting('user');
+    const nameEl = document.getElementById('profileName');
+    const metaEl = document.getElementById('profileMeta');
+    const avatarEl = document.getElementById('profileAvatar');
+    const loginBtn = document.getElementById('btnLogin');
+    if (user && user.name) {
+      nameEl.textContent = user.name;
+      metaEl.textContent = user.email || '已登录';
+      avatarEl.classList.add('profile-card__avatar--logged-in');
+      loginBtn.textContent = '退出';
+      loginBtn.classList.add('profile-card__action--logout');
+    } else {
+      nameEl.textContent = '未登录';
+      metaEl.textContent = '登录以同步数据';
+      avatarEl.classList.remove('profile-card__avatar--logged-in');
+      loginBtn.textContent = '登录';
+      loginBtn.classList.remove('profile-card__action--logout');
+    }
+  }
+
+  async function loadQuickStats() {
+    const counts = await App.getNoteCounts();
+    document.getElementById('statTotal').textContent = counts.total;
+    document.getElementById('statText').textContent = counts.text;
+    document.getElementById('statImage').textContent = counts.image;
+    document.getElementById('statVoice').textContent = counts.voice;
+  }
+
+  async function loadWeeklyReport() {
+    const refDate = new Date();
+    refDate.setDate(refDate.getDate() + weekOffset * 7);
+    document.getElementById('weekRange').textContent = App.weekRangeStr(refDate);
+    await App.renderWeekChart('weekChart', refDate);
+  }
+
+  function initWeekNav() {
+    document.getElementById('btnPrevWeek').addEventListener('click', () => { weekOffset--; loadWeeklyReport(); });
+    document.getElementById('btnNextWeek').addEventListener('click', () => { if (weekOffset < 0) { weekOffset++; loadWeeklyReport(); } });
+  }
+
+  async function loadMonthlyReport() {
+    const now = new Date();
+    const refDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+    document.getElementById('monthRange').textContent = App.monthRangeStr(refDate);
+    await App.renderMonthChart('monthBarChart', refDate.getFullYear(), refDate.getMonth());
+    const startDate = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+    const endDate = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0, 23, 59, 59, 999);
+    await App.renderDonutChart('monthDonutChart', startDate, endDate);
+  }
+
+  function initMonthNav() {
+    document.getElementById('btnPrevMonth').addEventListener('click', () => { monthOffset--; loadMonthlyReport(); });
+    document.getElementById('btnNextMonth').addEventListener('click', () => { if (monthOffset < 0) { monthOffset++; loadMonthlyReport(); } });
+  }
+
+  async function loadStorageInfo() {
+    const usage = await App.getStorageUsage();
+    const el = document.getElementById('storageUsage');
+    const fill = document.getElementById('storageFill');
+    if (usage.quota > 0) {
+      const usedMB = (usage.usage / (1024 * 1024)).toFixed(1);
+      const totalMB = (usage.quota / (1024 * 1024)).toFixed(0);
+      el.textContent = `${usedMB} MB / ${totalMB} MB`;
+      fill.style.width = `${Math.min(usage.percent, 100)}%`;
+      if (usage.percent > 80) fill.style.background = 'var(--color-error)';
+      else if (usage.percent > 60) fill.style.background = 'var(--color-warning)';
+    } else { el.textContent = '--'; }
+  }
+
+  function initLoginModal() {
+    const modal = document.getElementById('loginModal');
+    const loginBtn = document.getElementById('btnLogin');
+    const closeBtn = document.getElementById('btnCloseModal');
+    const confirmBtn = document.getElementById('btnConfirmLogin');
+
+    loginBtn.addEventListener('click', async () => {
+      const user = await App.getSetting('user');
+      if (user && user.name) {
+        if (confirm('确定退出登录吗？数据不会丢失。')) {
+          await App.setSetting('user', null);
+          await loadUserInfo();
+        }
+        return;
+      }
+      modal.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    confirmBtn.addEventListener('click', async () => {
+      const nickname = document.getElementById('inputNickname').value.trim();
+      if (!nickname) { alert('请输入昵称'); return; }
+      const email = document.getElementById('inputEmail').value.trim();
+      await App.setSetting('user', { name: nickname, email: email || '', createdAt: Date.now() });
+      modal.classList.add('hidden');
+      document.getElementById('inputNickname').value = '';
+      document.getElementById('inputEmail').value = '';
+      await loadUserInfo();
+    });
+  }
+
+})();
+
+
+// ====== js/app.js ======
+// ============================================================
+// app.js — Application entry point, router, initialization
+// ============================================================
+window.App = window.App || {};
+
+(function() {
+  const App = window.App;
+
+  const pages = {
+    home: { mount: null, unmount: null },
+    memory: { mount: null, unmount: null },
+    profile: { mount: null, unmount: null }
+  };
+
+  let activePage = 'home';
+
+  async function init() {
+    console.log('随手记 — 轻量碎片记录');
+    console.log('Initializing...');
+
+    // Register page handlers (set up by their respective modules)
+    pages.home.mount = App.mountHomePage;
+    pages.home.unmount = App.unmountHomePage;
+    pages.memory.mount = App.mountMemoryBankPage;
+    pages.memory.unmount = App.unmountMemoryBankPage;
+    pages.profile.mount = App.mountProfilePage;
+    pages.profile.unmount = App.unmountProfilePage;
+
+    // Init tab bar
+    App.initTabBar();
+
+    // Mount home page
+    await mountPage('home');
+
+    // Listen for page changes
+    App.subscribe('currentPage', async (page) => {
+      if (page !== activePage) await switchToPage(page);
+    });
+
+    window.addEventListener('page-changed', async (e) => {
+      if (e.detail.page !== activePage) await switchToPage(e.detail.page);
+    });
+
+    window.addEventListener('navigate', async (e) => {
+      await switchToPage(e.detail.page);
+    });
+
+    // Check memory bank page when it becomes active
+    window.addEventListener('page-changed', async (e) => {
+      if (e.detail.page === 'memory' && App.refreshMemoryBank) {
+        await App.refreshMemoryBank();
+      }
+      if (e.detail.page === 'profile') {
+        // Refresh stats
+        const counts = await App.getNoteCounts();
+        const statTotal = document.getElementById('statTotal');
+        if (statTotal) statTotal.textContent = counts.total;
+        document.getElementById('statText').textContent = counts.text;
+        document.getElementById('statImage').textContent = counts.image;
+        document.getElementById('statVoice').textContent = counts.voice;
+      }
+    });
+
+    if (!window.indexedDB) {
+      alert('您的浏览器不支持 IndexedDB，部分功能可能无法使用。');
+    }
+
+    console.log('随手记 初始化完成');
+  }
+
+  async function switchToPage(page) {
+    if (page === activePage) return;
+    console.log(`Switching: ${activePage} → ${page}`);
+
+    if (pages[activePage] && pages[activePage].unmount) {
+      pages[activePage].unmount();
+    }
+
+    const tabItem = document.querySelector(`.tab-bar__item[data-page="${page}"]`);
+    if (tabItem && !tabItem.classList.contains('tab-bar__item--active')) {
+      App.switchPage(page, false);
+    }
+
+    await mountPage(page);
+    activePage = page;
+  }
+
+  async function mountPage(page) {
+    if (pages[page] && pages[page].mount) {
+      try {
+        await pages[page].mount();
+      } catch(err) {
+        console.error(`Error mounting "${page}":`, err);
+      }
+    }
+  }
+
+  // ============================================================
+  // Service Worker
+  // ============================================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
+  // ============================================================
+  // Boot
+  // ============================================================
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled rejection:', event.reason);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+
+</script>
+</body>
+</html>
