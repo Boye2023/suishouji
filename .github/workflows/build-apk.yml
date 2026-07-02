@@ -24,7 +24,11 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/suishouji/app
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
+          mkdir -p app/src/main/res/xml
 
+          # AndroidManifest.xml
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -34,7 +38,9 @@ jobs:
               <application
                   android:allowBackup="true"
                   android:label="随手记"
-                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:theme="@style/AppTheme"
                   android:usesCleartextTraffic="true"
                   android:hardwareAccelerated="true">
                   <activity
@@ -45,11 +51,13 @@ jobs:
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
+                      <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true" />
                   </activity>
               </application>
           </manifest>
           EOF
 
+          # MainActivity.java
           cat > app/src/main/java/com/suishouji/app/MainActivity.java << 'EOF'
           package com.suishouji.app;
           import android.app.Activity;
@@ -58,11 +66,14 @@ jobs:
           import android.webkit.WebViewClient;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
+          import android.graphics.Color;
+
           public class MainActivity extends Activity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   WebView webView = new WebView(this);
+                  webView.setBackgroundColor(Color.parseColor("#F5F6FA"));
                   setContentView(webView);
                   WebSettings s = webView.getSettings();
                   s.setJavaScriptEnabled(true);
@@ -70,11 +81,67 @@ jobs:
                   s.setAllowFileAccess(true);
                   s.setMediaPlaybackRequiresUserGesture(false);
                   s.setDatabaseEnabled(true);
+                  s.setAllowContentAccess(true);
                   webView.setWebChromeClient(new WebChromeClient());
                   webView.setWebViewClient(new WebViewClient());
                   webView.loadUrl("https://boye2023.github.io/suishouji/");
               }
           }
+          EOF
+
+          # styles.xml
+          cat > app/src/main/res/values/styles.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+                  <item name="android:statusBarColor">#4A90D9</item>
+                  <item name="android:navigationBarColor">#FFFFFF</item>
+              </style>
+          </resources>
+          EOF
+
+          # colors.xml
+          cat > app/src/main/res/values/colors.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_background">#4A90D9</color>
+          </resources>
+          EOF
+
+          # Adaptive icon
+          cat > app/src/main/res/drawable/ic_launcher_foreground.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#FFFFFF"
+                  android:pathData="M30,30h48v48h-48zM33,33h12v3h-12zM33,39h30v3h-30zM33,45h30v3h-30zM33,51h24v3h-24z"/>
+          </vector>
+          EOF
+
+          cat > app/src/main/res/drawable/ic_launcher_background.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#4A90D9" android:pathData="M0,0h108v108h-108z"/>
+          </vector>
+          EOF
+
+          cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          # Network security config for cleartext traffic
+          cat > app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <domain-config cleartextTrafficPermitted="true">
+                  <domain includeSubdomains="true">localhost</domain>
+              </domain-config>
+          </network-security-config>
           EOF
 
       - name: Setup Gradle
@@ -99,17 +166,41 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
+              buildTypes {
+                  debug {
+                      minifyEnabled false
+                  }
+                  release {
+                      minifyEnabled true
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+                  }
+              }
+          }
+          dependencies {
+              implementation 'androidx.webkit:webkit:1.8.0'
           }
           EOF
 
           cat > settings.gradle << 'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
           include ':app'
+          EOF
+
+          cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m
           EOF
 
           gradle wrapper --gradle-version 8.4
 
       - name: Build APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: List APK
+        run: find . -name "*.apk" -exec ls -lh {} \;
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
