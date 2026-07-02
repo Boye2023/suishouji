@@ -420,7 +420,7 @@ img {
 }
 
 .image-file-input {
-  display: none;
+  /* Overridden in JS for mobile compatibility */
 }
 
 /* Image preview */
@@ -2611,7 +2611,17 @@ window.App = window.App || {};
     const removeBtn = document.getElementById('btnRemoveImage');
     const sendBtn = document.getElementById('btnSendImage');
 
-    dropZone.addEventListener('click', () => fileInput.click());
+    // Mobile: make file input cover the drop zone so tap directly triggers native picker
+    dropZone.style.position = 'relative';
+    dropZone.style.overflow = 'hidden';
+    fileInput.style.position = 'absolute';
+    fileInput.style.top = '0';
+    fileInput.style.left = '0';
+    fileInput.style.width = '100%';
+    fileInput.style.height = '100%';
+    fileInput.style.opacity = '0';
+    fileInput.style.cursor = 'pointer';
+    fileInput.style.display = 'block';
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
