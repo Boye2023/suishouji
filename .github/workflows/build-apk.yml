@@ -1,0 +1,52 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Generate TWA Project
+        run: |
+          # Create TWA project from the live PWA manifest
+          bubblewrap init --manifest https://boye2023.github.io/suishouji/manifest.json --directory twa --skip-signing
+
+      - name: Build APK
+        working-directory: ./twa
+        run: |
+          # Update the app to use the correct URL
+          bubblewrap build
+
+      - name: Find and Upload APK
+        run: |
+          echo "Looking for APK files..."
+          find ./twa -name "*.apk" -type f
+          mkdir -p output
+          find ./twa -name "*.apk" -type f -exec cp {} output/ \;
+          ls -la output/
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: suishouji-apk
+          path: output/*.apk
