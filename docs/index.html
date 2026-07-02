@@ -1641,17 +1641,15 @@ img {
           <div class="record-view" id="viewImage">
             <div class="image-upload-area" id="imageUploadArea">
               <div class="image-pick-buttons">
-                <label class="image-pick-btn" for="imageFileInput">
+                <button class="image-pick-btn" id="btnGallery">
                   <svg viewBox="0 0 24 24" width="24" height="24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/></svg>
                   <span>相册</span>
-                </label>
-                <label class="image-pick-btn" for="cameraInput">
+                </button>
+                <button class="image-pick-btn" id="btnCamera">
                   <svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 3h6l2 2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4l2-2zm3 16a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0-2a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg>
                   <span>拍照</span>
-                </label>
+                </button>
               </div>
-              <input type="file" accept="image/*" id="imageFileInput" class="image-file-input" style="display:none">
-              <input type="file" accept="image/*" capture="environment" id="cameraInput" class="image-file-input" style="display:none">
             </div>
             <div class="image-preview hidden" id="imagePreview">
               <img id="imagePreviewImg" class="image-preview__img" alt="预览">
@@ -2634,99 +2632,154 @@ window.App = window.App || {};
 
 (function() {
   const App = window.App;
-  let pendingFile = null, pendingThumbnail = null;
-  const MAX_FILE_SIZE = 20 * 1024 * 1024;
-  const THUMBNAIL_MAX_DIM = 200;
+  var pendingFile = null, pendingThumbnail = null;
+  var MAX_FILE_SIZE = 20 * 1024 * 1024;
+  var THUMBNAIL_MAX_DIM = 200;
+  var onFileSelectedCb = null, onErrorCb = null;
 
-  App.initImageUploader = function({ onFileSelected, onFileRemoved, onError }) {
-    const fileInput = document.getElementById('imageFileInput');
-    const cameraInput = document.getElementById('cameraInput');
-    const previewContainer = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('imagePreviewImg');
-    const captionWrapper = document.getElementById('imageCaptionWrapper');
-    const captionInput = document.getElementById('imageCaptionInput');
-    const removeBtn = document.getElementById('btnRemoveImage');
-    const sendBtn = document.getElementById('btnSendImage');
+  App.initImageUploader = function(opts) {
+    onFileSelectedCb = opts.onFileSelected || null;
+    opts.onFileRemoved = opts.onFileRemoved || null;
+    onErrorCb = opts.onError || null;
 
-    function onFileChange(e) {
-      const file = e.target.files[0];
-      if (file) handleFile(file);
-      e.target.value = '';
-    }
-    fileInput.addEventListener('change', onFileChange);
-    if (cameraInput) cameraInput.addEventListener('change', onFileChange);
+    var previewContainer = document.getElementById('imagePreview');
+    var previewImg = document.getElementById('imagePreviewImg');
+    var captionWrapper = document.getElementById('imageCaptionWrapper');
+    var captionInput = document.getElementById('imageCaptionInput');
+    var removeBtn = document.getElementById('btnRemoveImage');
+    var sendBtn = document.getElementById('btnSendImage');
+    var btnGallery = document.getElementById('btnGallery');
+    var btnCamera = document.getElementById('btnCamera');
 
-    removeBtn.addEventListener('click', () => {
-      clearImage();
-      if (onFileRemoved) onFileRemoved();
-    });
-
-    captionInput.addEventListener('input', () => {
-      sendBtn.disabled = !pendingFile;
-    });
-
-    sendBtn.addEventListener('click', () => {
-      if (pendingFile && onFileSelected) {
-        onFileSelected({
-          file: pendingFile,
-          thumbnail: pendingThumbnail,
-          caption: captionInput.value.trim()
+    // Gallery button - create and click a file input
+    if (btnGallery) {
+      btnGallery.addEventListener('click', function(e) {
+        e.preventDefault();
+        var inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.style.position = 'fixed';
+        inp.style.top = '-100px';
+        inp.style.left = '0';
+        inp.style.opacity = '0';
+        inp.style.zIndex = '9999';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', function(ev) {
+          var file = ev.target.files[0];
+          if (file) handleFile(file);
+          document.body.removeChild(inp);
         });
-      }
-    });
+        // Also handle cancel: remove after a delay
+        window.addEventListener('focus', function cleanup() {
+          setTimeout(function() {
+            if (inp.parentNode) document.body.removeChild(inp);
+          }, 500);
+          window.removeEventListener('focus', cleanup);
+        }, {once: true});
+        inp.click();
+      });
+    }
 
-    async function handleFile(file) {
-      if (!file.type.startsWith('image/')) {
-        if (onError) onError('请选择图片文件');
+    // Camera button - create and click a capture file input
+    if (btnCamera) {
+      btnCamera.addEventListener('click', function(e) {
+        e.preventDefault();
+        var inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.setAttribute('capture', 'environment');
+        inp.style.position = 'fixed';
+        inp.style.top = '-100px';
+        inp.style.left = '0';
+        inp.style.opacity = '0';
+        inp.style.zIndex = '9999';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', function(ev) {
+          var file = ev.target.files[0];
+          if (file) handleFile(file);
+          document.body.removeChild(inp);
+        });
+        window.addEventListener('focus', function cleanup() {
+          setTimeout(function() {
+            if (inp.parentNode) document.body.removeChild(inp);
+          }, 500);
+          window.removeEventListener('focus', cleanup);
+        }, {once: true});
+        inp.click();
+      });
+    }
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function() {
+        clearImage();
+        if (opts.onFileRemoved) opts.onFileRemoved();
+      });
+    }
+
+    if (captionInput) {
+      captionInput.addEventListener('input', function() {
+        if (sendBtn) sendBtn.disabled = !pendingFile;
+      });
+    }
+
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function() {
+        if (pendingFile && onFileSelectedCb) {
+          onFileSelectedCb({
+            file: pendingFile,
+            thumbnail: pendingThumbnail,
+            caption: captionInput ? captionInput.value.trim() : ''
+          });
+        }
+      });
+    }
+
+    function handleFile(file) {
+      if (!file.type || !file.type.startsWith('image/')) {
+        if (onErrorCb) onErrorCb('请选择图片文件');
         return;
       }
       if (file.size > MAX_FILE_SIZE) {
-        if (onError) onError('图片大小不能超过20MB');
+        if (onErrorCb) onErrorCb('图片大小不能超过20MB');
         return;
       }
-      try {
-        const thumbnail = await generateThumbnail(file);
+      generateThumbnail(file).then(function(thumbnail) {
         pendingFile = file;
         pendingThumbnail = thumbnail;
-        App.setState('pendingImage', { file, thumbnailBlob: thumbnail });
+        App.setState('pendingImage', { file: file, thumbnailBlob: thumbnail });
         var url = URL.createObjectURL(thumbnail);
-        previewImg.src = url;
-        previewContainer.classList.remove('hidden');
-        captionWrapper.classList.remove('hidden');
-        captionInput.value = '';
-        captionInput.focus();
-        sendBtn.disabled = false;
-      } catch(err) {
-        console.error('Image error:', err);
-        if (onError) onError('图片处理失败');
-      }
+        if (previewImg) previewImg.src = url;
+        if (previewContainer) previewContainer.classList.remove('hidden');
+        if (captionWrapper) captionWrapper.classList.remove('hidden');
+        if (captionInput) { captionInput.value = ''; captionInput.focus(); }
+        if (sendBtn) sendBtn.disabled = false;
+      }).catch(function(err) {
+        console.error('Thumbnail error:', err);
+        if (onErrorCb) onErrorCb('图片处理失败');
+      });
     }
 
     function clearImage() {
-      if (previewImg.src) URL.revokeObjectURL(previewImg.src);
+      if (previewImg && previewImg.src) URL.revokeObjectURL(previewImg.src);
       pendingFile = null;
       pendingThumbnail = null;
       App.setState('pendingImage', null);
-      previewContainer.classList.add('hidden');
-      previewImg.src = '';
-      captionWrapper.classList.add('hidden');
-      captionInput.value = '';
-      sendBtn.disabled = true;
+      if (previewContainer) previewContainer.classList.add('hidden');
+      if (previewImg) previewImg.src = '';
+      if (captionWrapper) captionWrapper.classList.add('hidden');
+      if (captionInput) captionInput.value = '';
+      if (sendBtn) sendBtn.disabled = true;
     }
   };
 
-  async function generateThumbnail(file, maxDim) {
-    maxDim = maxDim || THUMBNAIL_MAX_DIM;
+  function generateThumbnail(file) {
+    var maxDim = THUMBNAIL_MAX_DIM;
     if (typeof createImageBitmap !== 'undefined') {
-      try {
-        var bitmap = await createImageBitmap(file, {
-          resizeWidth: maxDim, resizeHeight: maxDim, resizeQuality: 'medium'
-        });
+      return createImageBitmap(file, { resizeWidth: maxDim, resizeHeight: maxDim, resizeQuality: 'medium' }).then(function(bitmap) {
         var canvas = document.createElement('canvas');
         canvas.width = bitmap.width;
         canvas.height = bitmap.height;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0);
+        canvas.getContext('2d').drawImage(bitmap, 0, 0);
         bitmap.close();
         return new Promise(function(resolve, reject) {
           canvas.toBlob(function(blob) {
@@ -2734,8 +2787,14 @@ window.App = window.App || {};
             else reject(new Error('toBlob failed'));
           }, 'image/jpeg', 0.75);
         });
-      } catch(e) {}
+      }).catch(function() {
+        return fallbackThumbnail(file, maxDim);
+      });
     }
+    return fallbackThumbnail(file, maxDim);
+  }
+
+  function fallbackThumbnail(file, maxDim) {
     return new Promise(function(resolve, reject) {
       var img = new Image();
       var url = URL.createObjectURL(file);
@@ -2745,17 +2804,13 @@ window.App = window.App || {};
         var canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(function(blob) {
           if (blob) resolve(blob);
           else reject(new Error('toBlob failed'));
         }, 'image/jpeg', 0.7);
       };
-      img.onerror = function() {
-        URL.revokeObjectURL(url);
-        reject(new Error('Image load failed'));
-      };
+      img.onerror = function() { URL.revokeObjectURL(url); reject(new Error('load failed')); };
       img.src = url;
     });
   }
