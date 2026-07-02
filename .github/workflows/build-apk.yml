@@ -199,17 +199,18 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
               signingConfigs {
                   release {
-                      storeFile file('suishouji.keystore')
+                      storeFile rootProject.file('suishouji.keystore')
                       storePassword 'suishouji123'
                       keyAlias 'suishouji'
                       keyPassword 'suishouji123'
+                  }
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.release
                   }
               }
           }
@@ -236,12 +237,12 @@ jobs:
 
       - name: Generate Keystore
         run: |
-          keytool -genkey -v -keystore app/suishouji.keystore -alias suishouji \
+          keytool -genkey -v -keystore suishouji.keystore -alias suishouji \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass suishouji123 -keypass suishouji123 \
             -dname "CN=Suishouji, OU=App, O=Suishouji, L=Beijing, ST=Beijing, C=CN"
 
-      - name: Build Release APK
+      - name: Build Signed Release APK
         run: ./gradlew assembleRelease
 
       - name: Upload APK
