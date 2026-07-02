@@ -200,12 +200,16 @@ jobs:
                   versionName "1.0"
               }
               buildTypes {
-                  debug {
+                  release {
                       minifyEnabled false
                   }
+              }
+              signingConfigs {
                   release {
-                      minifyEnabled true
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+                      storeFile file('suishouji.keystore')
+                      storePassword 'suishouji123'
+                      keyAlias 'suishouji'
+                      keyPassword 'suishouji123'
                   }
               }
           }
@@ -230,14 +234,18 @@ jobs:
 
           gradle wrapper --gradle-version 8.4
 
-      - name: Build APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v -keystore app/suishouji.keystore -alias suishouji \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass suishouji123 -keypass suishouji123 \
+            -dname "CN=Suishouji, OU=App, O=Suishouji, L=Beijing, ST=Beijing, C=CN"
 
-      - name: List APK
-        run: find . -name "*.apk" -exec ls -lh {} \;
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: suishouji-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
