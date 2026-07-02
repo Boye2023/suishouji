@@ -9,44 +9,110 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0'
 
-      - name: Generate TWA Project
+      - name: Create Android Project
         run: |
-          # Create TWA project from the live PWA manifest
-          bubblewrap init --manifest https://boye2023.github.io/suishouji/manifest.json --directory twa --skip-signing
+          mkdir -p app/src/main/java/com/suishouji/app
+          mkdir -p app/src/main/res/values
+
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+              <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+              <application
+                  android:allowBackup="true"
+                  android:label="随手记"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/java/com/suishouji/app/MainActivity.java << 'EOF'
+          package com.suishouji.app;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          public class MainActivity extends Activity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  WebView webView = new WebView(this);
+                  setContentView(webView);
+                  WebSettings s = webView.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setAllowFileAccess(true);
+                  s.setMediaPlaybackRequiresUserGesture(false);
+                  s.setDatabaseEnabled(true);
+                  webView.setWebChromeClient(new WebChromeClient());
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.loadUrl("https://boye2023.github.io/suishouji/");
+              }
+          }
+          EOF
+
+      - name: Setup Gradle
+        run: |
+          cat > build.gradle << 'EOF'
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.2.0' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+
+          cat > app/build.gradle << 'EOF'
+          apply plugin: 'com.android.application'
+          android {
+              namespace 'com.suishouji.app'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.suishouji.app"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+          }
+          EOF
+
+          cat > settings.gradle << 'EOF'
+          include ':app'
+          EOF
+
+          gradle wrapper --gradle-version 8.4
 
       - name: Build APK
-        working-directory: ./twa
-        run: |
-          # Update the app to use the correct URL
-          bubblewrap build
+        run: ./gradlew assembleDebug
 
-      - name: Find and Upload APK
-        run: |
-          echo "Looking for APK files..."
-          find ./twa -name "*.apk" -type f
-          mkdir -p output
-          find ./twa -name "*.apk" -type f -exec cp {} output/ \;
-          ls -la output/
-
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: suishouji-apk
-          path: output/*.apk
+          path: app/build/outputs/apk/debug/*.apk
