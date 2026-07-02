@@ -3173,7 +3173,12 @@ window.App = window.App || {};
 (function() {
   const App = window.App;
 
+  var _homeInited = false;
+
   App.mountHomePage = function() {
+    if (_homeInited) return;
+    _homeInited = true;
+
     initNoteTypeSelector();
     initTextInput();
     initImageSection();
@@ -3316,7 +3321,12 @@ window.App = window.App || {};
   let currentSelectedDate = null;
   let currentSearchQuery = '';
 
+  var _memoryInited = false;
+
   App.mountMemoryBankPage = async function() {
+    if (_memoryInited) { await App.refreshMemoryBank(); return; }
+    _memoryInited = true;
+
     await App.renderCalendarStrip(null);
 
     App.setupCalendarListener(async (date) => {
@@ -3360,7 +3370,12 @@ window.App = window.App || {};
   const App = window.App;
   let weekOffset = 0, monthOffset = 0;
 
+  var _profileInited = false;
+
   App.mountProfilePage = async function() {
+    if (_profileInited) { await loadUserInfo(); await loadQuickStats(); return; }
+    _profileInited = true;
+
     await loadUserInfo();
     await loadQuickStats();
     await loadWeeklyReport();
