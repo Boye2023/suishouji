@@ -2,7 +2,7 @@
 // sw.js — Service Worker (cache-first for app shell)
 // ============================================================
 
-const CACHE_NAME = 'suishouji-v1';
+const CACHE_NAME = 'suishouji-v2';
 const ASSETS = [
   './',
   './index.html',
