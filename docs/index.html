@@ -420,7 +420,38 @@ img {
 }
 
 .image-file-input {
-  /* Overridden in JS for mobile compatibility */
+  display: none;
+}
+
+/* Image pick buttons */
+.image-pick-buttons {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.image-pick-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 100px;
+  text-decoration: none;
+}
+
+.image-pick-btn:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
 }
 
 /* Image preview */
@@ -1609,12 +1640,18 @@ img {
           <!-- Image input view -->
           <div class="record-view" id="viewImage">
             <div class="image-upload-area" id="imageUploadArea">
-              <label class="image-drop-zone" id="imageDropZone" for="imageFileInput">
-                <svg viewBox="0 0 48 48" width="48" height="48" class="image-drop-zone__icon"><path d="M8 8h32a2 2 0 0 1 2 2v28a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 2v24h28V10H10zm6 12l4 5.5L25 21l6 9H10l6-9zm2-4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill="currentColor"/></svg>
-                <p class="image-drop-zone__text">点击选择或拖拽图片</p>
-                <p class="image-drop-zone__hint">支持 JPG、PNG、WebP，最大 20MB</p>
-              </label>
+              <div class="image-pick-buttons">
+                <label class="image-pick-btn" for="imageFileInput">
+                  <svg viewBox="0 0 24 24" width="24" height="24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/></svg>
+                  <span>相册</span>
+                </label>
+                <label class="image-pick-btn" for="cameraInput">
+                  <svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 3h6l2 2h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4l2-2zm3 16a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0-2a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg>
+                  <span>拍照</span>
+                </label>
+              </div>
               <input type="file" accept="image/*" id="imageFileInput" class="image-file-input" style="display:none">
+              <input type="file" accept="image/*" capture="environment" id="cameraInput" class="image-file-input" style="display:none">
             </div>
             <div class="image-preview hidden" id="imagePreview">
               <img id="imagePreviewImg" class="image-preview__img" alt="预览">
@@ -2603,6 +2640,7 @@ window.App = window.App || {};
 
   App.initImageUploader = function({ onFileSelected, onFileRemoved, onError }) {
     const fileInput = document.getElementById('imageFileInput');
+    const cameraInput = document.getElementById('cameraInput');
     const previewContainer = document.getElementById('imagePreview');
     const previewImg = document.getElementById('imagePreviewImg');
     const captionWrapper = document.getElementById('imageCaptionWrapper');
@@ -2610,15 +2648,13 @@ window.App = window.App || {};
     const removeBtn = document.getElementById('btnRemoveImage');
     const sendBtn = document.getElementById('btnSendImage');
 
-    // The HTML has a <label for="imageFileInput"> wrapping the drop zone area
-    // Tapping anywhere on the label triggers the native file picker on mobile
-
-    fileInput.addEventListener('change', (e) => {
+    function onFileChange(e) {
       const file = e.target.files[0];
       if (file) handleFile(file);
-      // Reset so re-selecting same file works
-      fileInput.value = '';
-    });
+      e.target.value = '';
+    }
+    fileInput.addEventListener('change', onFileChange);
+    if (cameraInput) cameraInput.addEventListener('change', onFileChange);
 
     removeBtn.addEventListener('click', () => {
       clearImage();
