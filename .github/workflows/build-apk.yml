@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -20,16 +23,21 @@ jobs:
         with:
           packages: 'platforms;android-34 build-tools;34.0.0'
 
-      - name: Create Android Project
+      - name: Build APK
         run: |
+          # Create Android project structure
           mkdir -p app/src/main/java/com/suishouji/app
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/mipmap-anydpi-v26
           mkdir -p app/src/main/res/xml
+          mkdir -p app/src/main/assets
+
+          # Copy built HTML into assets (loads locally, no network needed)
+          cp docs/index.html app/src/main/assets/index.html
 
           # AndroidManifest.xml
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
+          cat > app/src/main/AndroidManifest.xml << 'MF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
@@ -53,32 +61,24 @@ jobs:
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
-                      <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true" />
                   </activity>
                   <provider
                       android:name="androidx.core.content.FileProvider"
-                      android:authorities="${applicationId}.fileprovider"
+                      android:authorities="com.suishouji.app.fileprovider"
                       android:exported="false"
                       android:grantUriPermissions="true">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/file_paths"/>
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
                   </provider>
               </application>
           </manifest>
-          EOF
+          MF
 
-          # MainActivity.java with JavaScript interface for native image picking
-          cat > app/src/main/java/com/suishouji/app/MainActivity.java << 'EOF'
+          # MainActivity with JavaScript interface
+          cat > app/src/main/java/com/suishouji/app/MainActivity.java << 'JAVA'
           package com.suishouji.app;
           import android.app.Activity;
           import android.os.Bundle;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-          import android.webkit.WebChromeClient;
-          import android.webkit.WebSettings;
-          import android.webkit.PermissionRequest;
-          import android.webkit.JavascriptInterface;
+          import android.webkit.*;
           import android.graphics.Color;
           import android.Manifest;
           import android.content.pm.PackageManager;
@@ -88,180 +88,138 @@ jobs:
           import androidx.core.app.ActivityCompat;
           import androidx.core.content.ContextCompat;
           import androidx.core.content.FileProvider;
-          import java.io.File;
-          import java.io.InputStream;
+          import java.io.*;
           import android.util.Base64;
-          import android.webkit.ValueCallback;
 
           public class MainActivity extends Activity {
-              private static final int REQ_PERMISSIONS = 1;
-              private static final int REQ_GALLERY = 2;
-              private static final int REQ_CAMERA = 3;
-              private WebView webView;
+              private static final int REQ_PERM = 1, REQ_GALLERY = 2, REQ_CAMERA = 3;
+              private WebView wv;
               private Uri cameraUri;
 
               @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  webView = new WebView(this);
-                  webView.setBackgroundColor(Color.parseColor("#F5F6FA"));
-                  setContentView(webView);
-                  WebSettings s = webView.getSettings();
-                  s.setJavaScriptEnabled(true);
-                  s.setDomStorageEnabled(true);
-                  s.setAllowFileAccess(true);
-                  s.setMediaPlaybackRequiresUserGesture(false);
-                  s.setDatabaseEnabled(true);
-                  s.setAllowContentAccess(true);
-                  s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-                  webView.addJavascriptInterface(new WebAppInterface(), "Android");
+              protected void onCreate(Bundle s) {
+                  super.onCreate(s);
+                  wv = new WebView(this);
+                  wv.setBackgroundColor(Color.parseColor("#F5F6FA"));
+                  setContentView(wv);
+                  WebSettings ws = wv.getSettings();
+                  ws.setJavaScriptEnabled(true);
+                  ws.setDomStorageEnabled(true);
+                  ws.setAllowFileAccess(true);
+                  ws.setMediaPlaybackRequiresUserGesture(false);
+                  ws.setDatabaseEnabled(true);
+                  ws.setAllowContentAccess(true);
+                  ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                  ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
-                  webView.setWebChromeClient(new WebChromeClient() {
-                      @Override
-                      public void onPermissionRequest(PermissionRequest request) {
-                          request.grant(request.getResources());
-                      }
+                  wv.addJavascriptInterface(new Bridge(), "Android");
+
+                  wv.setWebChromeClient(new WebChromeClient() {
+                      @Override public void onPermissionRequest(PermissionRequest r) { r.grant(r.getResources()); }
                   });
-                  webView.setWebViewClient(new WebViewClient());
+                  wv.setWebViewClient(new WebViewClient());
 
-                  requestPermissions();
-                  webView.loadUrl("https://boye2023.github.io/suishouji/");
+                  String[] perms = {Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA};
+                  boolean ok = true;
+                  for (String p : perms)
+                      if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) ok = false;
+                  if (!ok) ActivityCompat.requestPermissions(this, perms, REQ_PERM);
+
+                  // Load local HTML from assets (no network dependency)
+                  wv.loadUrl("file:///android_asset/index.html");
               }
 
-              private void requestPermissions() {
-                  String[] needed = {Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA};
-                  boolean allGranted = true;
-                  for (String p : needed) {
-                      if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED)
-                          allGranted = false;
-                  }
-                  if (!allGranted)
-                      ActivityCompat.requestPermissions(this, needed, REQ_PERMISSIONS);
-              }
-
-              private void sendImageToJS(Uri uri) {
+              private void sendImage(Uri uri) {
                   try {
                       InputStream is = getContentResolver().openInputStream(uri);
-                      byte[] bytes = new byte[is.available()];
-                      is.read(bytes);
-                      is.close();
-                      String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
-                      final String js = "window.__imageResult('" + b64 + "')";
-                      webView.post(new Runnable() {
-                          @Override public void run() { webView.evaluateJavascript(js, null); }
-                      });
+                      byte[] data = new byte[is.available()];
+                      is.read(data); is.close();
+                      final String b64 = Base64.encodeToString(data, Base64.NO_WRAP);
+                      wv.post(() -> wv.evaluateJavascript("window.__imageResult('" + b64 + "')", null));
                   } catch (Exception e) {
-                      final String js = "window.__imageError('" + e.getMessage() + "')";
-                      webView.post(new Runnable() {
-                          @Override public void run() { webView.evaluateJavascript(js, null); }
-                      });
+                      final String msg = e.getMessage();
+                      wv.post(() -> wv.evaluateJavascript("window.__imageError('" + msg + "')", null));
                   }
               }
 
-              @Override
-              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-                  super.onActivityResult(requestCode, resultCode, data);
-                  if (resultCode != RESULT_OK) return;
-                  Uri uri = null;
-                  if (requestCode == REQ_GALLERY && data != null) uri = data.getData();
-                  if (requestCode == REQ_CAMERA) uri = cameraUri;
-                  if (uri != null) sendImageToJS(uri);
+              @Override protected void onActivityResult(int rc, int rv, Intent d) {
+                  super.onActivityResult(rc, rv, d);
+                  if (rv != RESULT_OK) return;
+                  if (rc == REQ_GALLERY && d != null) sendImage(d.getData());
+                  if (rc == REQ_CAMERA) sendImage(cameraUri);
               }
 
-              public class WebAppInterface {
-                  @JavascriptInterface
-                  public void openGallery() {
-                      Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                      startActivityForResult(intent, REQ_GALLERY);
+              class Bridge {
+                  @JavascriptInterface public void openGallery() {
+                      startActivityForResult(new Intent(Intent.ACTION_PICK,
+                          MediaStore.Images.Media.EXTERNAL_CONTENT_URI), REQ_GALLERY);
                   }
-                  @JavascriptInterface
-                  public void openCamera() {
-                      Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                      File photoFile = new File(getExternalCacheDir(), "photo.jpg");
+                  @JavascriptInterface public void openCamera() {
+                      Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                      File f = new File(getExternalCacheDir(), "cam.jpg");
                       cameraUri = FileProvider.getUriForFile(MainActivity.this,
-                          getPackageName() + ".fileprovider", photoFile);
-                      intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
-                      startActivityForResult(intent, REQ_CAMERA);
+                          "com.suishouji.app.fileprovider", f);
+                      i.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+                      startActivityForResult(i, REQ_CAMERA);
                   }
               }
           }
-          EOF
+          JAVA
 
-          # FileProvider for camera
-          mkdir -p app/src/main/res/xml
-          cat > app/src/main/res/xml/file_paths.xml << 'EOF'
+          cat > app/src/main/res/xml/file_paths.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
-          <paths>
-              <cache-path name="cache" path="."/>
-          </paths>
-          EOF
+          <paths><cache-path name="cache" path="."/></paths>
+          XML
 
-          # styles.xml
-          cat > app/src/main/res/values/styles.xml << 'EOF'
+          cat > app/src/main/res/values/styles.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
               <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
                   <item name="android:statusBarColor">#4A90D9</item>
-                  <item name="android:navigationBarColor">#FFFFFF</item>
               </style>
           </resources>
-          EOF
+          XML
 
-          # colors.xml
-          cat > app/src/main/res/values/colors.xml << 'EOF'
+          cat > app/src/main/res/values/colors.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="ic_background">#4A90D9</color>
-          </resources>
-          EOF
+          <resources><color name="ic_background">#4A90D9</color></resources>
+          XML
 
-          # Adaptive icon
-          cat > app/src/main/res/drawable/ic_launcher_foreground.xml << 'EOF'
+          cat > app/src/main/res/drawable/ic_launcher_foreground.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
               <path android:fillColor="#FFFFFF"
                   android:pathData="M30,30h48v48h-48zM33,33h12v3h-12zM33,39h30v3h-30zM33,45h30v3h-30zM33,51h24v3h-24z"/>
           </vector>
-          EOF
+          XML
 
-          cat > app/src/main/res/drawable/ic_launcher_background.xml << 'EOF'
+          cat > app/src/main/res/drawable/ic_launcher_background.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
               <path android:fillColor="#4A90D9" android:pathData="M0,0h108v108h-108z"/>
           </vector>
-          EOF
+          XML
 
-          cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+          cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
               <background android:drawable="@drawable/ic_launcher_background"/>
               <foreground android:drawable="@drawable/ic_launcher_foreground"/>
           </adaptive-icon>
-          EOF
+          XML
 
-          # Network security config for cleartext traffic
-          cat > app/src/main/res/xml/network_security_config.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <network-security-config>
-              <domain-config cleartextTrafficPermitted="true">
-                  <domain includeSubdomains="true">localhost</domain>
-              </domain-config>
-          </network-security-config>
-          EOF
-
-      - name: Setup Gradle
-        run: |
-          cat > build.gradle << 'EOF'
+          # Gradle files
+          cat > build.gradle << 'GR'
           buildscript {
               repositories { google(); mavenCentral() }
               dependencies { classpath 'com.android.tools.build:gradle:8.2.0' }
           }
           allprojects { repositories { google(); mavenCentral() } }
-          EOF
+          GR
 
-          cat > app/build.gradle << 'EOF'
+          cat > app/build.gradle << 'GR'
           apply plugin: 'com.android.application'
           android {
               namespace 'com.suishouji.app'
@@ -282,42 +240,35 @@ jobs:
                   }
               }
               buildTypes {
-                  release {
-                      minifyEnabled false
-                      signingConfig signingConfigs.release
-                  }
+                  release { minifyEnabled false; signingConfig signingConfigs.release }
               }
           }
           dependencies {
               implementation 'androidx.webkit:webkit:1.8.0'
               implementation 'androidx.core:core:1.12.0'
           }
-          EOF
+          GR
 
-          cat > settings.gradle << 'EOF'
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
+          cat > settings.gradle << 'GR'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           include ':app'
-          EOF
+          GR
 
-          cat > gradle.properties << 'EOF'
+          cat > gradle.properties << 'GR'
           android.useAndroidX=true
           android.enableJetifier=true
           org.gradle.jvmargs=-Xmx2048m
-          EOF
+          GR
 
           gradle wrapper --gradle-version 8.4
 
-      - name: Generate Keystore
-        run: |
+          # Generate keystore & build
           keytool -genkey -v -keystore suishouji.keystore -alias suishouji \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass suishouji123 -keypass suishouji123 \
-            -dname "CN=Suishouji, OU=App, O=Suishouji, L=Beijing, ST=Beijing, C=CN"
+            -dname "CN=SJ, OU=App, O=SJ, L=BJ, ST=BJ, C=CN"
 
-      - name: Build Signed Release APK
-        run: ./gradlew assembleRelease
+          ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
