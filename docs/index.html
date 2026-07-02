@@ -3174,6 +3174,7 @@ window.App = window.App || {};
   const App = window.App;
 
   var _homeInited = false;
+  var _saving = false;
 
   App.mountHomePage = function() {
     if (_homeInited) return;
@@ -3221,8 +3222,10 @@ window.App = window.App || {};
     });
 
     sendBtn.addEventListener('click', async () => {
+      if (_saving) return;
       const content = textInput.value.trim();
       if (!content) return;
+      _saving = true;
       sendBtn.disabled = true;
       showAI(true);
       try {
@@ -3237,6 +3240,7 @@ window.App = window.App || {};
       } finally {
         showAI(false);
         sendBtn.disabled = false;
+        _saving = false;
       }
     });
 
@@ -3251,6 +3255,8 @@ window.App = window.App || {};
   function initImageSection() {
     App.initImageUploader({
       onFileSelected: async ({ file, thumbnail, caption }) => {
+        if (_saving) return;
+        _saving = true;
         showAI(true);
         try {
           const note = await App.processWithAI({ type: 'image', textContent: caption || '', imageBlob: file, imageThumbnail: thumbnail });
@@ -3260,7 +3266,7 @@ window.App = window.App || {};
         } catch(err) {
           console.error('Save image error:', err);
           showToast('保存失败，请重试', true);
-        } finally { showAI(false); }
+        } finally { showAI(false); _saving = false; }
       },
       onFileRemoved: () => {},
       onError: (msg) => showToast(msg, true)
@@ -3271,6 +3277,8 @@ window.App = window.App || {};
     App.initVoiceRecorder({
       onRecordingStart: () => {},
       onRecordingStop: async ({ blob, duration }) => {
+        if (_saving) return;
+        _saving = true;
         showAI(true);
         try {
           const note = await App.processWithAI({ type: 'voice', voiceBlob: blob, voiceDuration: duration });
@@ -3279,7 +3287,7 @@ window.App = window.App || {};
         } catch(err) {
           console.error('Save voice error:', err);
           showToast('保存失败，请重试', true);
-        } finally { showAI(false); }
+        } finally { showAI(false); _saving = false; }
       },
       onError: (err) => {
         if (err.name === 'NotAllowedError') showToast('请允许使用麦克风', true);
