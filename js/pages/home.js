@@ -59,7 +59,6 @@ window.App = window.App || {};
         textInput.value = '';
         charCount.textContent = '0/5000';
         showToast('文字记录已保存');
-        App.refreshTimeline();
       } catch(err) {
         console.error('Save text error:', err);
         showToast('保存失败，请重试', true);
@@ -86,7 +85,6 @@ window.App = window.App || {};
           await App.saveNote(note);
           App.clearPendingImage();
           showToast('图片记录已保存');
-          App.refreshTimeline();
         } catch(err) {
           console.error('Save image error:', err);
           showToast('保存失败，请重试', true);
@@ -106,7 +104,6 @@ window.App = window.App || {};
           const note = await App.processWithAI({ type: 'voice', voiceBlob: blob, voiceDuration: duration });
           await App.saveNote(note);
           showToast('语音记录已保存');
-          App.refreshTimeline();
         } catch(err) {
           console.error('Save voice error:', err);
           showToast('保存失败，请重试', true);
