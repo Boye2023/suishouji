@@ -12,11 +12,17 @@
    1. CSS Custom Properties (Design Tokens)
    ============================================================ */
 :root {
-  /* Color Palette */
+  /* Color Palette - Blue to Orange Gradient Theme */
   --color-primary: #4A90D9;
   --color-primary-light: #7AB3E8;
   --color-primary-dark: #3A7BC8;
   --color-primary-bg: rgba(74, 144, 217, 0.08);
+  --color-secondary: #FF8C42;
+  --color-secondary-light: #FFB380;
+  --color-secondary-dark: #E67A30;
+  --gradient-primary: linear-gradient(135deg, #4A90D9 0%, #6BA5E7 30%, #FF8C42 100%);
+  --gradient-header: linear-gradient(135deg, #4A90D9 0%, #FF8C42 100%);
+  --gradient-btn: linear-gradient(135deg, #4A90D9, #FF8C42);
 
   --color-bg: #F5F6FA;
   --color-surface: #FFFFFF;
@@ -38,7 +44,7 @@
   --color-warning: #FF9500;
   --color-error: #FF3B30;
 
-  --color-calendar-dot: #4A90D9;
+  --color-calendar-dot: #FF8C42;
   --color-calendar-badge: #FF6B6B;
 
   /* Typography */
@@ -87,6 +93,80 @@
   --transition-normal: 250ms ease;
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --color-primary: #6BA5E7;
+  --color-primary-light: #8BC0F0;
+  --color-primary-dark: #4A90D9;
+  --color-primary-bg: rgba(107, 165, 231, 0.15);
+  --color-secondary: #FF8C42;
+  --color-secondary-light: #FFB380;
+  --gradient-primary: linear-gradient(135deg, #6BA5E7 0%, #FF8C42 100%);
+  --gradient-header: linear-gradient(135deg, #4A90D9 0%, #FF8C42 100%);
+  --gradient-btn: linear-gradient(135deg, #4A90D9, #FF8C42);
+
+  --color-bg: #1A1A2E;
+  --color-surface: #252540;
+  --color-surface-hover: #2E2E4A;
+
+  --color-text: #E8E8F0;
+  --color-text-secondary: #A0A0B0;
+  --color-text-tertiary: #666680;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: #333350;
+  --color-divider: #2A2A45;
+
+  --color-accent-voice: #FF6B6B;
+  --color-accent-image: #4ECDC4;
+  --color-accent-text: #6BA5E7;
+
+  --color-success: #34C759;
+  --color-warning: #FF9500;
+  --color-error: #FF3B30;
+
+  --color-calendar-dot: #FF8C42;
+  --color-calendar-badge: #FF6B6B;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Gradient header for light and dark */
+.page-header {
+  background: var(--gradient-header);
+  border-bottom: none;
+}
+.page-header__title, .page-header__subtitle {
+  color: #FFFFFF;
+}
+
+/* Gradient send buttons */
+.btn-send {
+  background: var(--gradient-btn);
+}
+.btn-send:not(:disabled):active {
+  background: var(--gradient-btn);
+  filter: brightness(0.9);
+}
+
+/* Gradient tab active */
+.tab-bar__item--active {
+  color: #FF8C42;
+}
+
+/* Gradient active note type button */
+.note-type-btn--active {
+  background: var(--gradient-btn);
+}
+
+/* Profile card avatar gradient */
+.profile-card__avatar--logged-in {
+  background: var(--gradient-btn);
 }
 
 /* ============================================================
@@ -1770,6 +1850,14 @@ img {
             <div class="profile-card__meta" id="profileMeta">登录以同步数据</div>
           </div>
           <button class="profile-card__action" id="btnLogin">登录</button>
+        </div>
+
+        <!-- Theme toggle -->
+        <div class="theme-toggle" style="display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-4);box-shadow:var(--shadow-sm);">
+          <span style="font-size:var(--font-size-body);font-weight:500;color:var(--color-text);">🌓 深色主题</span>
+          <button id="btnThemeToggle" style="width:52px;height:28px;border-radius:14px;border:none;background:var(--color-border);cursor:pointer;position:relative;transition:all var(--transition-fast);">
+            <span id="themeToggleDot" style="display:block;width:22px;height:22px;border-radius:50%;background:white;position:absolute;top:3px;left:3px;transition:all var(--transition-fast);box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+          </button>
         </div>
 
         <!-- Quick stats -->
@@ -3457,10 +3545,36 @@ window.App = window.App || {};
 
   var _profileInited = false;
 
+  function initThemeToggle() {
+    var btn = document.getElementById('btnThemeToggle');
+    var dot = document.getElementById('themeToggleDot');
+    if (!btn) return;
+    // Load saved theme
+    var saved = localStorage.getItem('theme') || 'light';
+    applyTheme(saved, btn, dot);
+    btn.addEventListener('click', function() {
+      var current = document.documentElement.getAttribute('data-theme') || 'light';
+      var next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next);
+      applyTheme(next, btn, dot);
+    });
+  }
+  function applyTheme(theme, btn, dot) {
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      if (btn) btn.style.background = '#FF8C42';
+      if (dot) dot.style.left = '27px';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      if (btn) btn.style.background = '';
+      if (dot) dot.style.left = '3px';
+    }
+  }
+
   App.mountProfilePage = async function() {
     if (_profileInited) { await loadUserInfo(); await loadQuickStats(); return; }
     _profileInited = true;
-
+    initThemeToggle();
     await loadUserInfo();
     await loadQuickStats();
     await loadWeeklyReport();
