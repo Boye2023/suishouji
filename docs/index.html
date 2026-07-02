@@ -1609,12 +1609,12 @@ img {
           <!-- Image input view -->
           <div class="record-view" id="viewImage">
             <div class="image-upload-area" id="imageUploadArea">
-              <div class="image-drop-zone" id="imageDropZone">
+              <label class="image-drop-zone" id="imageDropZone" for="imageFileInput">
                 <svg viewBox="0 0 48 48" width="48" height="48" class="image-drop-zone__icon"><path d="M8 8h32a2 2 0 0 1 2 2v28a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 2v24h28V10H10zm6 12l4 5.5L25 21l6 9H10l6-9zm2-4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill="currentColor"/></svg>
                 <p class="image-drop-zone__text">点击选择或拖拽图片</p>
                 <p class="image-drop-zone__hint">支持 JPG、PNG、WebP，最大 20MB</p>
-              </div>
-              <input type="file" accept="image/*" id="imageFileInput" class="image-file-input">
+              </label>
+              <input type="file" accept="image/*" id="imageFileInput" class="image-file-input" style="display:none">
             </div>
             <div class="image-preview hidden" id="imagePreview">
               <img id="imagePreviewImg" class="image-preview__img" alt="预览">
@@ -2602,7 +2602,6 @@ window.App = window.App || {};
   const THUMBNAIL_MAX_DIM = 200;
 
   App.initImageUploader = function({ onFileSelected, onFileRemoved, onError }) {
-    const dropZone = document.getElementById('imageDropZone');
     const fileInput = document.getElementById('imageFileInput');
     const previewContainer = document.getElementById('imagePreview');
     const previewImg = document.getElementById('imagePreviewImg');
@@ -2611,59 +2610,52 @@ window.App = window.App || {};
     const removeBtn = document.getElementById('btnRemoveImage');
     const sendBtn = document.getElementById('btnSendImage');
 
-    // Mobile: make file input cover the drop zone so tap directly triggers native picker
-    dropZone.style.position = 'relative';
-    dropZone.style.overflow = 'hidden';
-    fileInput.style.position = 'absolute';
-    fileInput.style.top = '0';
-    fileInput.style.left = '0';
-    fileInput.style.width = '100%';
-    fileInput.style.height = '100%';
-    fileInput.style.opacity = '0';
-    fileInput.style.cursor = 'pointer';
-    fileInput.style.display = 'block';
+    // The HTML has a <label for="imageFileInput"> wrapping the drop zone area
+    // Tapping anywhere on the label triggers the native file picker on mobile
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) handleFile(file);
+      // Reset so re-selecting same file works
+      fileInput.value = '';
     });
 
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropZone.classList.add('image-drop-zone--active');
-    });
-    dropZone.addEventListener('dragleave', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropZone.classList.remove('image-drop-zone--active');
-    });
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropZone.classList.remove('image-drop-zone--active');
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
+    removeBtn.addEventListener('click', () => {
+      clearImage();
+      if (onFileRemoved) onFileRemoved();
     });
 
-    removeBtn.addEventListener('click', () => { clearImage(); if (onFileRemoved) onFileRemoved(); });
-
-    captionInput.addEventListener('input', () => { sendBtn.disabled = !pendingFile; });
+    captionInput.addEventListener('input', () => {
+      sendBtn.disabled = !pendingFile;
+    });
 
     sendBtn.addEventListener('click', () => {
       if (pendingFile && onFileSelected) {
-        onFileSelected({ file: pendingFile, thumbnail: pendingThumbnail, caption: captionInput.value.trim() });
+        onFileSelected({
+          file: pendingFile,
+          thumbnail: pendingThumbnail,
+          caption: captionInput.value.trim()
+        });
       }
     });
 
     async function handleFile(file) {
-      if (!file.type.startsWith('image/')) { if (onError) onError('请选择图片文件'); return; }
-      if (file.size > MAX_FILE_SIZE) { if (onError) onError('图片大小不能超过20MB'); return; }
+      if (!file.type.startsWith('image/')) {
+        if (onError) onError('请选择图片文件');
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        if (onError) onError('图片大小不能超过20MB');
+        return;
+      }
       try {
         const thumbnail = await generateThumbnail(file);
-        pendingFile = file; pendingThumbnail = thumbnail;
+        pendingFile = file;
+        pendingThumbnail = thumbnail;
         App.setState('pendingImage', { file, thumbnailBlob: thumbnail });
-        const url = URL.createObjectURL(thumbnail);
+        var url = URL.createObjectURL(thumbnail);
         previewImg.src = url;
         previewContainer.classList.remove('hidden');
-        dropZone.parentElement.style.display = 'none';
         captionWrapper.classList.remove('hidden');
         captionInput.value = '';
         captionInput.focus();
@@ -2676,61 +2668,74 @@ window.App = window.App || {};
 
     function clearImage() {
       if (previewImg.src) URL.revokeObjectURL(previewImg.src);
-      pendingFile = null; pendingThumbnail = null;
+      pendingFile = null;
+      pendingThumbnail = null;
       App.setState('pendingImage', null);
       previewContainer.classList.add('hidden');
       previewImg.src = '';
-      dropZone.parentElement.style.display = 'block';
       captionWrapper.classList.add('hidden');
       captionInput.value = '';
       sendBtn.disabled = true;
     }
   };
 
-  async function generateThumbnail(file, maxDim = THUMBNAIL_MAX_DIM) {
-    if ('createImageBitmap' in window) {
+  async function generateThumbnail(file, maxDim) {
+    maxDim = maxDim || THUMBNAIL_MAX_DIM;
+    if (typeof createImageBitmap !== 'undefined') {
       try {
-        const bitmap = await createImageBitmap(file, { resizeWidth: maxDim, resizeHeight: maxDim, resizeQuality: 'medium' });
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width; canvas.height = bitmap.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0); bitmap.close();
-        return new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('toBlob failed')); }, 'image/jpeg', 0.75);
+        var bitmap = await createImageBitmap(file, {
+          resizeWidth: maxDim, resizeHeight: maxDim, resizeQuality: 'medium'
         });
-      } catch(e) { console.warn('createImageBitmap failed:', e); }
+        var canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        return new Promise(function(resolve, reject) {
+          canvas.toBlob(function(blob) {
+            if (blob) resolve(blob);
+            else reject(new Error('toBlob failed'));
+          }, 'image/jpeg', 0.75);
+        });
+      } catch(e) {}
     }
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
+    return new Promise(function(resolve, reject) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function() {
         URL.revokeObjectURL(url);
-        const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
-        const canvas = document.createElement('canvas');
+        var scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+        var canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext('2d');
+        var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('toBlob failed')); }, 'image/jpeg', 0.7);
+        canvas.toBlob(function(blob) {
+          if (blob) resolve(blob);
+          else reject(new Error('toBlob failed'));
+        }, 'image/jpeg', 0.7);
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+      img.onerror = function() {
+        URL.revokeObjectURL(url);
+        reject(new Error('Image load failed'));
+      };
       img.src = url;
     });
   }
 
   App.clearPendingImage = function() {
-    const previewImg = document.getElementById('imagePreviewImg');
-    const previewContainer = document.getElementById('imagePreview');
-    const dropZone = document.getElementById('imageDropZone');
-    const captionWrapper = document.getElementById('imageCaptionWrapper');
-    const captionInput = document.getElementById('imageCaptionInput');
-    const sendBtn = document.getElementById('btnSendImage');
+    var previewImg = document.getElementById('imagePreviewImg');
+    var previewContainer = document.getElementById('imagePreview');
+    var captionWrapper = document.getElementById('imageCaptionWrapper');
+    var captionInput = document.getElementById('imageCaptionInput');
+    var sendBtn = document.getElementById('btnSendImage');
     if (previewImg && previewImg.src) URL.revokeObjectURL(previewImg.src);
-    pendingFile = null; pendingThumbnail = null;
+    pendingFile = null;
+    pendingThumbnail = null;
     App.setState('pendingImage', null);
     if (previewContainer) previewContainer.classList.add('hidden');
     if (previewImg) previewImg.src = '';
-    if (dropZone) dropZone.parentElement.style.display = 'block';
     if (captionWrapper) captionWrapper.classList.add('hidden');
     if (captionInput) captionInput.value = '';
     if (sendBtn) sendBtn.disabled = true;
